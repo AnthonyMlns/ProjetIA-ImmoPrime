@@ -56,14 +56,42 @@
 - [x] UI fonctionnelle (4 etapes, drag-drop, bulk import, scores sidebar)
 - [x] Sanitizer + anti-injection (double couche)
 
-### A faire
-- [ ] Mettre en place le harnais de comparaison extraction vs verite terrain (script Python diff champ a champ)
-- [ ] Constituer un jeu de test de 20-30 R1 reels avec verite terrain
-- [ ] Remplacer pdfplumber restant par PyMuPDF / pdf2image pour les fichiers non-PDF
-- [ ] Activer l'agent 00-qa pour validation des sorties
-- [ ] **Revoir les 91 champs avec le client** (trop de champs ? prioriser ?)
+### A faire — Finalisation Phase 0 (~16h dev + tests)
+- [ ] **Harnais d'evaluation** — script Python diff champ a champ vs verite terrain, sort un taux d'exactitude global + par champ (~2h)
+- [ ] **Jeu de test** — constituer 20-30 R1 reels avec verite terrain saisie a la main (~2h + client)
+- [ ] **PyMuPDF** — remplacer pdfplumber pour les non-PDF, rasterisation avant envoi vision (~1h)
+- [ ] **Agent 00-qa** — activer la validation des sorties (6 dimensions : structure, coherence, anti-injection, NDA, anti-hallucination, completude) (~3h)
+- [ ] **Schema champs** — revoir les 91 champs avec le client, prioriser (~1h)
 
-### Cout API estime
+### Auto-incrementation (architecture prevue, a implementer)
+- [ ] **Boucle courte** — chaque correction/declaration cree une nouvelle version AIF (jamais ecrasement), score recalcule
+- [ ] **Boucle moyenne** — Match/objection/visite enrichit profil actif + acquereur via retrieval
+- [ ] **Boucle longue** — questions/reponses mandataires affinent le gabarit pour actifs similaires
+- [ ] **Versioning** — `proj["version"]` incrementiel, historique des AIF, changelog
+
+### Tests a mettre en place
+- [ ] Tests end-to-end PDF varies (scanne, multi-pages, sans texte, avec tableaux) (~2h)
+- [ ] Tests prompt injection (sanitizer + Claude via XML tagging) (~1h)
+- [ ] Tests UI (navigation 4 etapes, cache, bulk import, corbeille, rename) (~1h)
+- [ ] Tests regression (le fallback regex fonctionne sans API) (~30min)
+- [ ] **Criteres d'acceptation Phase 0**:
+  - Taux d'exactitude ≥ X% sur le jeu de test (a definir avec le client)
+  - Toutes les etapes du pipeline fonctionnelles sans erreur
+  - Temps d'extraction < 10s par document
+  - 0 injection bypass (sanitizer + Claude combinés)
+  - UI utilisable sans console erreurs
+
+### Budget API pour les tests
+| Usage | Appels | Cout |
+|---|---|---|
+| 30 R1 × extraction Vision | 30 | ~1.50 $ |
+| 10 enrichissements | 10 | ~0.10 $ |
+| Tests injection / edge cases | 20 | ~1.00 $ |
+| Iterations / debug / re-runs | 30 | ~1.20 $ |
+| **Total** | **~90 appels** | **~3.80 $** |
+→ 5 € de credit suffisent pour boucler la Phase 0
+
+### Cout API estime (production)
 - Claude Sonnet 4.6 : ~0.03 $ / appel (extraction texte)
 - Avec PDF Vision : ~0.04-0.05 $ / appel (document natif)
 - Requete R1 standard (1-3 documents) : 0.03 - 0.06 $ / analyse complete
