@@ -1,7 +1,13 @@
+import path from "path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Pin the workspace root to this app — the monorepo has sibling
+  // package-lock.json files (frontend/, repo root) that otherwise confuse
+  // Turbopack's root inference.
+  turbopack: {
+    root: path.join(__dirname),
+  },
 };
 
 export default nextConfig;
