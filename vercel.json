@@ -1,7 +1,18 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "nextjs",
-  "installCommand": "cd site && npm install",
-  "buildCommand": "cd site && npm run build",
-  "outputDirectory": "site/.next"
+  "services": {
+    "site": {
+      "root": "site",
+      "framework": "nextjs"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": {
+        "type": "service",
+        "service": "site"
+      }
+    }
+  ]
 }
