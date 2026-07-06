@@ -334,7 +334,13 @@ export default function Home() {
       {/* ── Sidebar ── */}
       <aside className={`${sidebarOpen ? "w-64" : "w-0"} border-r border-[var(--border)] bg-[var(--surface)] flex flex-col transition-all duration-200 overflow-hidden shrink-0`}>
         <div className="p-4 flex items-center justify-between">
-          <span className="font-bold text-sm tracking-widest uppercase opacity-60">◇ UPRE</span>
+          <a
+            href={process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001"}
+            className="font-bold text-sm tracking-widest uppercase opacity-60 hover:opacity-100 transition-opacity"
+            title="Retour au site"
+          >
+            ◇ UPRE
+          </a>
           <ThemeToggle />
         </div>
         <div className="px-3 pb-2">

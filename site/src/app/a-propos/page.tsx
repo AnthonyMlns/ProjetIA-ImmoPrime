@@ -13,7 +13,7 @@ const LEADERSHIP = [
 export default function AProposPage() {
   return (
     <main>
-      <section className="relative h-[500px] overflow-hidden flex items-end">
+      <section className="relative min-h-[500px] overflow-hidden flex items-end">
         <div className="absolute inset-0 z-0">
           <Image
             src="/images/cannes/Cannes-interieur-1.png"

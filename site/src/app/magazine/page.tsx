@@ -50,7 +50,7 @@ export default function MagazinePage() {
 
   return (
     <main>
-      <section className="relative h-[600px] overflow-hidden flex items-end">
+      <section className="relative min-h-[600px] overflow-hidden flex items-end">
         <div className="absolute inset-0 z-0">
           <Image src={hero.image} alt={hero.title} fill sizes="100vw" priority className="object-cover" />
           <div className="absolute inset-0 luxury-gradient" />

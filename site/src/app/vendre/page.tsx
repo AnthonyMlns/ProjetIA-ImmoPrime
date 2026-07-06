@@ -40,7 +40,7 @@ const TESTIMONIALS = [
 export default function VendrePage() {
   return (
     <main>
-      <section className="relative h-[600px] flex items-center overflow-hidden">
+      <section className="relative min-h-[600px] py-32 flex items-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image
             src="/images/mougins/vignoble-exterieur.png"

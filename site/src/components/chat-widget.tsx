@@ -10,15 +10,15 @@ const INTENTS = [
 ];
 
 export function ChatWidget() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const router = useRouter();
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 max-w-[calc(100vw-2rem)]">
       {open && (
-        <div className="mb-4 w-80 bg-white border border-muted/30 rounded-xl shadow-2xl overflow-hidden">
+        <div className="mb-4 w-80 max-w-[calc(100vw-2rem)] bg-white border border-muted/30 rounded-xl shadow-2xl overflow-hidden">
           <div className="bg-primary text-on-primary px-5 py-4 flex items-center justify-between">
-            <span className="font-title-card text-title-card">Conciergerie UPRE</span>
+            <span className="font-title-card text-title-card">Alfred, votre concierge</span>
             <button onClick={() => setOpen(false)} aria-label="Fermer" className="opacity-70 hover:opacity-100 transition-opacity">
               <span className="material-symbols-outlined text-xl">close</span>
             </button>

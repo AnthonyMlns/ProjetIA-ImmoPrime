@@ -2,6 +2,7 @@
 UPRE Backend — FastAPI Application
 """
 
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -22,12 +23,15 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
 )
 
+DEFAULT_ORIGINS = [
+    "http://localhost:3000", "http://127.0.0.1:3000",
+    "http://localhost:3001", "http://127.0.0.1:3001",
+]
+extra_origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000", "http://127.0.0.1:3000",
-        "http://localhost:3001", "http://127.0.0.1:3001",
-    ],
+    allow_origins=DEFAULT_ORIGINS + extra_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

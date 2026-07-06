@@ -54,21 +54,21 @@
   --font-body-md: var(--font-dm-sans), sans-serif;
   --font-legal: var(--font-dm-sans), sans-serif;
 
-  --text-display-hero: 64px;
-  --text-display-hero--line-height: 1.05;
+  --text-display-hero: clamp(2.25rem, 5vw + 1rem, 4rem);
+  --text-display-hero--line-height: 1.1;
   --text-display-hero--letter-spacing: -0.02em;
   --text-display-hero--font-weight: 400;
 
-  --text-headline-lg: 56px;
-  --text-headline-lg--line-height: 1.08;
+  --text-headline-lg: clamp(2rem, 4vw + 1rem, 3.5rem);
+  --text-headline-lg--line-height: 1.12;
   --text-headline-lg--font-weight: 400;
 
-  --text-headline-md: 42px;
-  --text-headline-md--line-height: 1.1;
+  --text-headline-md: clamp(1.75rem, 3vw + 1rem, 2.625rem);
+  --text-headline-md--line-height: 1.15;
   --text-headline-md--font-weight: 500;
 
-  --text-headline-sm: 30px;
-  --text-headline-sm--line-height: 1.15;
+  --text-headline-sm: clamp(1.25rem, 1.5vw + 1rem, 1.875rem);
+  --text-headline-sm--line-height: 1.2;
   --text-headline-sm--font-weight: 400;
 
   --text-title-card: 22px;
