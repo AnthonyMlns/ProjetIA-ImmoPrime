@@ -18,6 +18,7 @@ export interface Project {
   assets_count: number;
   trashed: boolean;
   last_score: number | null;
+  visibility: "private" | "public" | "gated";
 }
 
 export interface FileRecord {
@@ -95,6 +96,8 @@ export const api = {
     trash: (id: string) => request<{ ok: boolean; trashed: boolean }>(`/projects/${id}/trash`, { method: "POST" }),
     restore: (id: string) => request<{ ok: boolean; trashed: boolean }>(`/projects/${id}/restore`, { method: "POST" }),
     rename: (id: string, name: string) => request<{ ok: boolean; name: string }>(`/projects/${id}/rename`, { method: "POST", body: JSON.stringify({ name }) }),
+    setVisibility: (id: string, visibility: "private" | "public" | "gated") =>
+      request<{ ok: boolean; visibility: string }>(`/projects/${id}/visibility`, { method: "POST", body: JSON.stringify({ visibility }) }),
     delete: (id: string) => request<{ ok: boolean }>(`/projects/${id}`, { method: "DELETE" }),
   },
   upload: (projectId: string, file: File) => {

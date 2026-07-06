@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UPRE — Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1A2342;
+    --gold:#C2A368;
+    --cream:#FBF8F5;
+    --white:#FFFFFF;
+    --grey-secondary:#D9D9D6;
+    --blue-grey-secondary:#8D91A1;
+    --gold-secondary:#DFCBA7;
+    --outline:#D6D1C9;
+    --outline-80: rgba(214,209,201,0.8);
+    --shadow-gold-50: rgba(223,203,167,0.5);
+    --serif:'DM Serif Display', serif;
+    --sans:'DM Sans', sans-serif;
+    --radius: 4px;
+    --container: 1180px;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--navy);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  ::selection{ background:var(--gold-secondary); color:var(--navy); }
+
+  a{color:inherit;}
+
+  .wrap{max-width:var(--container); margin:0 auto; padding:0 32px;}
+
+  /* ---------- TOP NAV ---------- */
+  .topnav{
+    position:sticky; top:0; z-index:50;
+    background:rgba(251,248,245,0.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--outline);
+  }
+  .topnav .wrap{
+    display:flex; align-items:center; justify-content:space-between;
+    height:72px;
+  }
+  .topnav .brand{
+    font-family:var(--serif); font-style:italic; font-size:22px; color:var(--navy);
+    letter-spacing:.3px;
+  }
+  .topnav .brand span{color:var(--gold); font-style:normal;}
+  .topnav nav{display:flex; gap:28px;}
+  .topnav nav a{
+    font-size:13px; font-weight:500; letter-spacing:.08em; text-transform:uppercase;
+    text-decoration:none; color:var(--navy); opacity:.7; transition:opacity .2s ease;
+  }
+  .topnav nav a:hover{opacity:1;}
+
+  /* ---------- HERO ---------- */
+  .hero{padding:96px 0 64px; border-bottom:1px solid var(--outline);}
+  .hero .eyebrow{
+    font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--gold); margin:0 0 18px;
+  }
+  .hero h1{
+    font-family:var(--serif); font-weight:400; font-size:clamp(38px,5vw,64px);
+    line-height:1.05; margin:0 0 22px; max-width:780px;
+  }
+  .hero h1 em{font-style:italic; color:var(--gold);}
+  .hero p{
+    font-size:17px; line-height:1.7; max-width:560px; color:#3c4256; margin:0;
+  }
+
+  /* ---------- SECTION SHELL ---------- */
+  section.block{padding:72px 0; border-bottom:1px solid var(--outline);}
+  section.block:last-of-type{border-bottom:none;}
+  .block-head{margin-bottom:42px;}
+  .block-head .tag{
+    display:inline-block; font-size:12px; font-weight:600; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--gold); border:1px solid var(--gold-secondary);
+    background:var(--white); padding:5px 12px; border-radius:100px; margin-bottom:16px;
+  }
+  .block-head h2{
+    font-family:var(--serif); font-weight:400; font-size:34px; margin:0 0 10px;
+  }
+  .block-head p{margin:0; color:#5b607a; font-size:15px; max-width:620px;}
+
+  /* ---------- COLOR SWATCHES ---------- */
+  .swatch-grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:20px;
+  }
+  .swatch{
+    background:var(--white); border:1px solid var(--outline); border-radius:10px;
+    overflow:hidden; cursor:pointer; transition:transform .18s ease, box-shadow .18s ease;
+    position:relative;
+  }
+  .swatch:hover{ transform:translateY(-3px); box-shadow:0 10px 24px -12px rgba(26,35,66,.25); }
+  .swatch .fill{height:110px; position:relative;}
+  .swatch .fill::after{
+    content:'copier'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.28); color:#fff; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    opacity:0; transition:opacity .18s ease; font-weight:600;
+  }
+  .swatch:hover .fill::after{opacity:1;}
+  .swatch .meta{padding:12px 14px;}
+  .swatch .meta .name{font-size:13px; font-weight:600; margin:0 0 3px;}
+  .swatch .meta .hex{font-size:12px; color:#7a8093; margin:0; font-variant-numeric:tabular-nums;}
+  .swatch .meta .role{font-size:11px; color:var(--gold); text-transform:uppercase; letter-spacing:.06em; margin-top:4px; display:block;}
+  .toast{
+    position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--navy); color:#fff; padding:10px 20px; border-radius:100px; font-size:13px;
+    opacity:0; pointer-events:none; transition:all .25s ease; letter-spacing:.02em; z-index:100;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  /* ---------- TYPOGRAPHY ---------- */
+  .type-row{
+    display:flex; align-items:baseline; justify-content:space-between; gap:32px;
+    padding:28px 0; border-bottom:1px dashed var(--outline);
+  }
+  .type-row:last-child{border-bottom:none;}
+  .type-sample{flex:1; min-width:0;}
+  .type-meta{
+    flex-shrink:0; width:230px; text-align:right; font-size:12px; color:#7a8093;
+    line-height:1.6;
+  }
+  .type-meta b{display:block; color:var(--navy); font-size:13px; font-weight:600; margin-bottom:2px;}
+
+  .t-h1{font-family:var(--serif); font-weight:400; font-size:56px; line-height:1.08; margin:0;}
+  .t-h2{font-family:var(--serif); font-weight:500; font-size:42px; line-height:1.1; margin:0;}
+  .t-h3{font-family:var(--serif); font-style:italic; font-weight:400; font-size:30px; line-height:1.15; margin:0;}
+  .t-h4{font-family:var(--serif); font-weight:600; font-size:22px; line-height:1.25; margin:0;}
+  .t-h5{font-family:var(--sans); font-weight:600; font-size:18px; text-transform:uppercase; letter-spacing:.06em; margin:0;}
+  .t-nav{font-family:var(--sans); font-weight:500; font-size:15px; text-transform:uppercase; letter-spacing:.09em; margin:0;}
+  .t-head{font-family:var(--sans); font-weight:400; font-size:18px; line-height:1.6; margin:0; max-width:560px; color:#3c4256;}
+  .t-body{font-family:var(--sans); font-weight:400; font-size:16px; line-height:1.7; margin:0; max-width:560px; color:#3c4256;}
+  .t-cta{font-family:var(--sans); font-weight:500; font-size:15px; margin:0;}
+  .t-headen{font-family:var(--sans); font-weight:600; font-size:15px; text-transform:uppercase; letter-spacing:.08em; margin:0;}
+  .t-legal{font-family:var(--sans); font-weight:400; font-size:12px; margin:0; color:#7a8093;}
+  .t-testimonial{font-family:var(--sans); font-weight:700; font-style:italic; font-size:17px; line-height:1.6; margin:0; max-width:520px;}
+  .t-blog{font-family:var(--sans); font-weight:500; font-size:14px; text-transform:uppercase; letter-spacing:.1em; margin:0; color:var(--gold);}
+
+  /* ---------- BUTTONS ---------- */
+  .btn-grid{display:flex; flex-wrap:wrap; gap:16px; align-items:center;}
+  .btn{
+    font-family:var(--sans); font-weight:500; font-size:15px; letter-spacing:.02em;
+    padding:14px 30px; border-radius:100px; border:1px solid transparent; cursor:pointer;
+    text-decoration:none; display:inline-flex; align-items:center; gap:8px; transition:all .2s ease;
+  }
+  .btn-primary-dark{background:var(--navy); color:var(--white);}
+  .btn-primary-dark:hover{background:#0f1529;}
+  .btn-primary-light{background:var(--gold); color:var(--navy);}
+  .btn-primary-light:hover{background:#ad8f57;}
+  .btn-outline-dark{background:transparent; color:var(--navy); border-color:var(--navy);}
+  .btn-outline-dark:hover{background:var(--navy); color:#fff;}
+  .btn-outline-light{background:transparent; color:var(--white); border-color:var(--white);}
+  .btn-secondary{background:var(--white); color:var(--navy); border-color:var(--outline);}
+  .btn-secondary:hover{border-color:var(--gold); color:var(--gold);}
+  .btn-text{background:none; padding:14px 4px; color:var(--navy); border-bottom:1px solid var(--navy); border-radius:0;}
+
+  .cta-dark-panel{
+    background:var(--navy); border-radius:16px; padding:40px; margin-top:28px;
+  }
+  .cta-dark-panel .btn-grid{gap:16px;}
+
+  /* ---------- CARDS / COMPONENTS ---------- */
+  .card-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:24px;}
+  .blog-card{
+    background:var(--white); border:1px solid var(--outline); border-radius:12px; overflow:hidden;
+    transition:box-shadow .2s ease, transform .2s ease;
+  }
+  .blog-card:hover{box-shadow:0 14px 30px -14px rgba(26,35,66,.28); transform:translateY(-2px);}
+  .blog-card .img{
+    height:160px;
+    background:linear-gradient(135deg, var(--gold-secondary), var(--outline));
+  }
+  .blog-card .body{padding:22px;}
+  .blog-card h4{font-family:var(--serif); font-weight:400; font-size:21px; margin:10px 0 10px; line-height:1.2;}
+  .blog-card p{font-size:14px; color:#5b607a; line-height:1.6; margin:0 0 16px;}
+  .blog-card .read-more{
+    font-size:13px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--gold); text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+  }
+
+  .testimonial-card{
+    background:var(--white); border:1px solid var(--outline); border-radius:12px; padding:32px;
+    display:flex; flex-direction:column; gap:18px;
+  }
+  .testimonial-card .stars{color:var(--gold); font-size:14px; letter-spacing:2px;}
+  .testimonial-card footer{font-size:13px; color:#7a8093; font-family:var(--sans); font-style:normal; font-weight:400;}
+
+  /* ---------- OPACITY / OUTLINE-SHADOW DEMO ---------- */
+  .demo-row{display:flex; gap:24px; flex-wrap:wrap;}
+  .demo-box{
+    width:160px; height:120px; border-radius:10px; display:flex; align-items:flex-end; padding:12px;
+    font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+  }
+  .demo-outline{background:var(--white); border:2px solid var(--outline-80); color:var(--navy);}
+  .demo-shadow{background:var(--white); box-shadow:0 12px 28px -6px var(--shadow-gold-50); color:var(--navy);}
+
+  /* ---------- FOOTER ---------- */
+  footer.page-footer{
+    padding:40px 0 60px; text-align:center;
+  }
+  footer.page-footer p{font-size:12px; color:#8a8fa3; margin:0;}
+
+  code.token{
+    font-family:ui-monospace, SFMono-Regular, monospace; background:var(--white);
+    border:1px solid var(--outline); border-radius:5px; padding:2px 7px; font-size:12px;
+  }
+
+  @media (max-width:720px){
+    .topnav nav{display:none;}
+    .type-row{flex-direction:column; align-items:flex-start; gap:10px;}
+    .type-meta{text-align:left; width:auto;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="wrap">
+    <div class="brand">UPRE<span>.</span></div>
+    <nav>
+      <a href="#couleurs">Couleurs</a>
+      <a href="#typographie">Typographie</a>
+      <a href="#boutons">Boutons &amp; CTA</a>
+      <a href="#composants">Composants</a>
+    </nav>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Design System — v1.0</p>
+    <h1>Une charte claire, <em>déclinable</em> partout où la marque s'exprime.</h1>
+    <p>Référence vivante des couleurs, typographies, boutons et composants de la charte UPRE. Copiez un code couleur, comparez les styles de call-to-action, ou dupliquez un composant directement dans votre code.</p>
+  </div>
+</header>
+
+<section class="block" id="couleurs">
+  <div class="wrap">
+    <div class="block-head">
+      <span class="tag">Palette</span>
+      <h2>Couleurs</h2>
+      <p>Cliquez sur une couleur pour copier son code hexadécimal. Les teintes secondaires servent aux fonds, bordures et états ; les couleurs primaires portent le texte et les actions.</p>
+    </div>
+
+    <div class="swatch-grid" id="swatchGrid">
+      <!-- injected by JS -->
+    </div>
+
+    <div style="margin-top:56px;">
+      <div class="block-head" style="margin-bottom:24px;">
+        <h2 style="font-size:24px;">Outline &amp; shadow</h2>
+        <p>Variantes utilisées pour les bordures discrètes et les ombres portées douces.</p>
+      </div>
+      <div class="demo-row">
+        <div class="demo-box demo-outline">Outline — D6D1C9 · 80%</div>
+        <div class="demo-box demo-shadow">Shadow — DFCBA7 · 50%</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="typographie">
+  <div class="wrap">
+    <div class="block-head">
+      <span class="tag">Aa</span>
+      <h2>Typographie</h2>
+      <p><strong>DM Serif Display</strong> pour les titres — porte le ton éditorial de la marque. <strong>DM Sans</strong> pour tout le reste — labels, texte courant, boutons.</p>
+    </div>
+
+    <div class="type-row">
+      <div class="type-sample"><p class="t-h1">This is an example of a headline.</p></div>
+      <div class="type-meta"><b>H1</b>DM Serif Display · 56pt · Medium</div>
+    </div>
+    <div class="type-row">
+      <div class="type-sample"><p class="t-h2">This is an example headline.</p></div>
+      <div class="type-meta"><b>H2</b>DM Serif Display · 42pt · Medium</div>
+    </div>
+    <div class="type-row">
+      <div class="type-sample"><p class="t-h3">This is an example of headline text.</p></div>
+      <div class="type-meta"><b>H3</b>DM Serif Display · 30pt · Italic</div>
+    </div>
+    <div class="type-row">
+      <div class="type-sample"><p class="t-h4">This is an example of headline text.</p></div>
+      <div class="type-meta"><b>H4</b>DM Serif Display · 22pt · Semibold — 24pt pour les titres biens</div>
+    </div>
+    <div class="type-row">
+      <div class="type-sample"><p class="t-h5">This is an example of headline text.</p></div>
+      <div class="type-meta"><b>H5</b>DM Sans · 18pt · Semibold · Capitale</div>
+    </div>
+    <div class="type-row">
+      <div class="type-sample"><p class="t-nav">This is an example of headline text</p></div>
+      <div class="type-meta"><b>Nav</b>DM Sans · 15pt · Medium · Capitale</div>
+    </div>
+    <div class="type-row">
+      <div class="type-sample"><p class="t-head">This is an example of body text. We know how stressful it is to leave your pets at home alone. We're a team of experienced animal caregivers, well connected to local veterinarians.</p></div>
+      <div class="type-meta"><b>Head text</b>DM Sans · 18pt · Regular</div>
+    </div>
+    <div class="type-row">
+      <div class="type-sample"><p class="t-body">This is an example of body text. We know how stressful it is to leave your pets at home alone. We're a team of experienced animal caregivers, well connected to local veterinarians. Trust us to love them like our own, and to keep them safe and happy till you're home.</p></div>
+      <div class="type-meta"><b>Body text basic</b>DM Sans · 16pt · Regular</div>
+    </div>
+    <div class="type-row">
+      <div class="type-sample"><p class="t-body">This is an example of body text. We know how stressful it is to leave your pets at home alone. We're a team of experienced animal caregivers, well connected to local veterinarians. Trust us to love them like our own, and to keep them safe and happy till you're home.</p></div>
+      <div class="type-meta"><b>Body text description</b>DM Sans · 16pt · Regular</div>
+    </div>
+    <div class="type-row">
+      <div class="type-sample"><p class="t-cta">CALL TO ACTION</p></div>
+      <div class="type-meta"><b>Call to action</b>DM Sans · 15pt · Medium</div>
+    </div>
+    <div class="type-row">
+      <div class="type-sample"><p class="t-headen">Headline (en-tête)</p></div>
+      <div class="type-meta"><b>Headline (en-tête)</b>DM Sans · 15pt · Semibold · Capitale</div>
+    </div>
+    <div class="type-row">
+      <div class="type-sample"><p class="t-legal">Mentions légales et fil d'Ariane — this is an example of headline text.</p></div>
+      <div class="type-meta"><b>Mentions légales / fil d'Ariane</b>DM Sans · 12pt · Regular</div>
+    </div>
+    <div class="type-row">
+      <div class="type-sample"><p class="t-testimonial">"This is an example of body text. We know how stressful it is to leave your pets at home alone. We're a team of experienced animal caregivers, well connected to local veterinarians."</p></div>
+      <div class="type-meta"><b>Testimonial text</b>DM Sans · 17pt · Bold Italic</div>
+    </div>
+    <div class="type-row">
+      <div class="type-sample"><p class="t-blog">Section blog — catégorie</p></div>
+      <div class="type-meta"><b>Section blog</b>DM Sans · 14pt · Medium · Capitale</div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="boutons">
+  <div class="wrap">
+    <div class="block-head">
+      <span class="tag">Actions</span>
+      <h2>Boutons &amp; CTA</h2>
+      <p>Les boutons pleins portent l'action principale, l'outline s'utilise sur fond clair ou foncé, le lien souligné pour les actions secondaires en ligne.</p>
+    </div>
+
+    <div class="btn-grid">
+      <a class="btn btn-primary-dark" href="#">Call to action</a>
+      <a class="btn btn-primary-light" href="#">Call to action</a>
+      <a class="btn btn-outline-dark" href="#">Call to action</a>
+      <a class="btn btn-secondary" href="#">Call to action</a>
+      <a class="btn btn-text" href="#">En savoir plus</a>
+    </div>
+
+    <div class="cta-dark-panel">
+      <p class="t-legal" style="color:var(--gold-secondary); margin-bottom:14px;">Marketing CTA — fond foncé</p>
+      <div class="btn-grid">
+        <a class="btn btn-primary-light" href="#">Être rappelé</a>
+        <a class="btn btn-outline-light" href="#">Call to action</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="composants">
+  <div class="wrap">
+    <div class="block-head">
+      <span class="tag">UI</span>
+      <h2>Composants</h2>
+      <p>Exemples d'assemblage : carte article de blog et bloc témoignage, construits uniquement avec les tokens ci-dessus.</p>
+    </div>
+
+    <div class="card-grid">
+      <div class="blog-card">
+        <div class="img"></div>
+        <div class="body">
+          <p class="t-blog">Conseils &amp; astuces</p>
+          <h4>Comment préparer l'arrivée de votre animal</h4>
+          <p>Ce qu'il faut prévoir avant de confier votre compagnon à un pet-sitter, du carnet de santé aux habitudes du quotidien.</p>
+          <a class="read-more" href="#">Lire plus →</a>
+        </div>
+      </div>
+
+      <div class="blog-card">
+        <div class="img" style="background:linear-gradient(135deg, var(--blue-grey-secondary), var(--navy));"></div>
+        <div class="body">
+          <p class="t-blog">Bien-être animal</p>
+          <h4>Reconnaître les signes de stress</h4>
+          <p>Un guide simple pour repérer les signaux d'anxiété chez le chien et le chat, et savoir comment réagir sereinement.</p>
+          <a class="read-more" href="#">Lire plus →</a>
+        </div>
+      </div>
+
+      <div class="testimonial-card">
+        <div class="stars">★★★★★</div>
+        <p class="t-testimonial">"Nous savons combien il est stressant de laisser son animal seul à la maison. Une équipe à l'écoute, professionnelle, et rassurante du premier au dernier jour."</p>
+        <footer>— Camille D., cliente UPRE</footer>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="page-footer">
+  <div class="wrap">
+    <p>UPRE — Design System · généré à partir de la charte graphique fournie</p>
+  </div>
+</footer>
+
+<div class="toast" id="toast">Copié !</div>
+
+<script>
+  const colors = [
+    {name:"Navy", role:"Primaire", hex:"#1A2342"},
+    {name:"Gold", role:"Primaire", hex:"#C2A368"},
+    {name:"Cream", role:"Primaire", hex:"#FBF8F5"},
+    {name:"White", role:"Primaire", hex:"#FFFFFF"},
+    {name:"Grey", role:"Secondaire", hex:"#D9D9D6"},
+    {name:"Blue-grey", role:"Secondaire", hex:"#8D91A1"},
+    {name:"Gold light", role:"Secondaire", hex:"#DFCBA7"},
+    {name:"White", role:"Secondaire", hex:"#FFFFFF"},
+  ];
+
+  const grid = document.getElementById('swatchGrid');
+  colors.forEach(c=>{
+    const el = document.createElement('div');
+    el.className='swatch';
+    el.innerHTML = `
+      <div class="fill" style="background:${c.hex}; ${c.hex.toUpperCase()==='#FFFFFF' ? 'border-bottom:1px solid #eee;' : ''}"></div>
+      <div class="meta">
+        <p class="name">${c.name}</p>
+        <p class="hex">${c.hex.toUpperCase()}</p>
+        <span class="role">${c.role}</span>
+      </div>`;
+    el.addEventListener('click', ()=>{
+      navigator.clipboard?.writeText(c.hex.toUpperCase());
+      const toast = document.getElementById('toast');
+      toast.textContent = `${c.hex.toUpperCase()} copié !`;
+      toast.classList.add('show');
+      setTimeout(()=>toast.classList.remove('show'), 1400);
+    });
+    grid.appendChild(el);
+  });
+</script>
+
+</body>
+</html>

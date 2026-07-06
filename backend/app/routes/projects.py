@@ -7,7 +7,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Query
 
-from app.models import Project, ProjectCreate, ProjectRename
+from app.models import Project, ProjectCreate, ProjectRename, VisibilityUpdate
 from app.services.storage import load as load_projects, save as save_projects
 
 router = APIRouter()
@@ -19,11 +19,13 @@ DATA_DIR.mkdir(exist_ok=True)
 def _build_project(pid: str, p: dict) -> Project:
     assets = p.get("assets", [])
     last_score = None
+    visibility = "private"
     if assets:
         last = assets[-1]
         if isinstance(last, dict):
             aif = last.get("aif", last)
             last_score = aif.get("score", aif.get("score_completude"))
+            visibility = aif.get("visibility", "private")
     return Project(
         id=pid,
         name=p.get("name", pid),
@@ -33,6 +35,7 @@ def _build_project(pid: str, p: dict) -> Project:
         assets_count=len(assets),
         trashed=p.get("trashed", False),
         last_score=last_score,
+        visibility=visibility,
     )
 
 
@@ -110,6 +113,38 @@ async def delete_project(project_id: str):
         del projects[project_id]
         save_projects(projects)
     return {"ok": True}
+
+
+@router.post("/{project_id}/visibility")
+async def set_project_visibility(project_id: str, body: VisibilityUpdate):
+    """Set visibility on a project's latest asset — the common case where a
+    project holds a single AIF and the caller doesn't track asset indices."""
+    if body.visibility not in {"private", "public", "gated"}:
+        return {"error": "Invalid visibility value"}, 400
+    projects = load_projects()
+    if project_id not in projects:
+        return {"error": "Project not found"}, 404
+    assets = projects[project_id].get("assets", [])
+    if not assets or "aif" not in assets[-1]:
+        return {"error": "No AIF asset on this project"}, 404
+    assets[-1]["aif"]["visibility"] = body.visibility
+    save_projects(projects)
+    return {"ok": True, "visibility": body.visibility}
+
+
+@router.post("/{project_id}/assets/{asset_index}/visibility")
+async def set_asset_visibility(project_id: str, asset_index: int, body: VisibilityUpdate):
+    if body.visibility not in {"private", "public", "gated"}:
+        return {"error": "Invalid visibility value"}, 400
+    projects = load_projects()
+    if project_id not in projects:
+        return {"error": "Project not found"}, 404
+    assets = projects[project_id].get("assets", [])
+    if asset_index < 0 or asset_index >= len(assets) or "aif" not in assets[asset_index]:
+        return {"error": "Asset not found"}, 404
+    assets[asset_index]["aif"]["visibility"] = body.visibility
+    save_projects(projects)
+    return {"ok": True, "visibility": body.visibility}
 
 
 @router.post("/{project_id}/rename")

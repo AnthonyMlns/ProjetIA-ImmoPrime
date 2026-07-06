@@ -316,7 +316,13 @@ async def generate_aif(req: AIFGenerateRequest):
         f"{note_actif}"
     )
 
-    proj.setdefault("assets", []).append({"aif": aif, "date": datetime.now().isoformat()})
+    proj.setdefault("assets", []).append({
+        "aif": aif,
+        "date": datetime.now().isoformat(),
+        "vignette": vignette,
+        "note_actif": note_actif,
+        "asset_briefing": asset_briefing,
+    })
     proj["stage"] = max(4, proj.get("stage", 0))
     save_projects(projects)
 

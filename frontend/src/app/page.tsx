@@ -5,7 +5,7 @@ import {
   Plus, Trash2, ChevronRight, Upload, FileText, CheckCircle2, AlertTriangle,
   XCircle, Download, RefreshCw, Loader2, Sparkles, Shield, ArrowRight,
   Search, MessageSquare, FileSpreadsheet, FolderOpen, Menu, X,
-  RotateCcw,
+  RotateCcw, Globe, Lock,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -27,6 +27,7 @@ export default function Home() {
   const [project, setProject] = useState<any>(null);
   const [stage, setStage] = useState<Stage>("home");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [visFilter, setVisFilter] = useState<"all" | "public" | "gated">("all");
 
   const [files, setFiles] = useState<FileRecord[]>([]);
   const [extraction, setExtraction] = useState<AssetExtraction | null>(null);
@@ -164,6 +165,26 @@ export default function Home() {
       }
       fetchProjects();
     } catch { addLog("Erreur mise en corbeille"); }
+  };
+
+  const cycleVisibility = async (p: Project) => {
+    const next = p.visibility === "gated" ? "public" : p.visibility === "public" ? "private" : "gated";
+    try {
+      await api.projects.setVisibility(p.id, next);
+      addLog(`Visibilité ${p.id} → ${next}`);
+      fetchProjects();
+    } catch { addLog("Erreur changement de visibilité"); }
+  };
+
+  const setPassportVisibility = async (visibility: "private" | "public" | "gated") => {
+    if (!selected) return;
+    try {
+      await api.projects.setVisibility(selected, visibility);
+      addLog(`Visibilité ${selected} → ${visibility}`);
+      const p = await api.projects.get(selected);
+      setProject(p);
+      fetchProjects();
+    } catch { addLog("Erreur changement de visibilité"); }
   };
 
   const restoreProject = async (id: string) => {
@@ -322,8 +343,27 @@ export default function Home() {
           </button>
         </div>
         <div className="px-3 text-xs font-semibold uppercase opacity-40 tracking-wider mt-2 mb-1">Projets</div>
+        <div className="px-3 pb-2 flex gap-1">
+          {([
+            { key: "all", label: "Tous" },
+            { key: "public", label: "Visible" },
+            { key: "gated", label: "Off-Market" },
+          ] as const).map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setVisFilter(f.key)}
+              className={`px-2 py-1 text-[11px] rounded-md font-medium transition-colors ${
+                visFilter === f.key
+                  ? "bg-[var(--accent)] text-white"
+                  : "opacity-50 hover:opacity-80 hover:bg-[var(--background)]"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
         <div className="overflow-y-auto px-2" style={{ flex: "1 1 auto" }}>
-          {projects.map((p) => (
+          {projects.filter((p) => visFilter === "all" || p.visibility === visFilter).map((p) => (
             <div key={p.id} className={`mb-0.5 rounded-lg group ${selected === p.id ? "bg-[var(--accent)]/10 ring-1 ring-[var(--accent)]/20" : "hover:bg-[var(--background)]"}`}>
               {renaming === p.id ? (
                 <div className="flex items-center gap-2 px-3 py-2">
@@ -349,6 +389,21 @@ export default function Home() {
                   ) : p.stage >= 2 ? (
                     <span className="text-[10px] opacity-30 tabular-nums shrink-0">--</span>
                   ) : null}
+                  <span
+                    onClick={(e) => { e.stopPropagation(); cycleVisibility(p); }}
+                    className={`shrink-0 p-0.5 rounded transition-opacity ${
+                      p.visibility === "public" ? "text-[var(--badge-ok)]" : p.visibility === "gated" ? "text-amber-500" : "opacity-30"
+                    }`}
+                    title={
+                      p.visibility === "public"
+                        ? "Visible sur le site — cliquer pour passer en Off-Market"
+                        : p.visibility === "gated"
+                        ? "Off-Market (accès protégé) — cliquer pour rendre privé"
+                        : "Privé (non publié) — cliquer pour rendre visible"
+                    }
+                  >
+                    {p.visibility === "public" ? <Globe size={12} /> : <Lock size={12} />}
+                  </span>
                   <span
                     onClick={(e) => { e.stopPropagation(); startRename(p); }}
                     className="shrink-0 p-0.5 rounded opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity"
@@ -782,6 +837,36 @@ export default function Home() {
                         v{aifResult.aif.version}
                       </span>
                       <Shield size={14} className="text-[var(--muted)]" />
+                    </div>
+
+                    {/* Publication sur le site */}
+                    <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+                      <h3 className="text-sm font-semibold mb-1">Publication sur le site</h3>
+                      <p className="text-xs opacity-50 mb-3">Choisir où ce bien apparaît sur la vitrine publique.</p>
+                      <div className="flex gap-2">
+                        {([
+                          { key: "private", label: "Privé", desc: "Non publié" },
+                          { key: "public", label: "Visible", desc: "Vignette + fiche publiques" },
+                          { key: "gated", label: "Off-Market", desc: "Accès protégé (Gated)" },
+                        ] as const).map((v) => {
+                          const current = project?.assets?.[project.assets.length - 1]?.aif?.visibility ?? "private";
+                          const active = current === v.key;
+                          return (
+                            <button
+                              key={v.key}
+                              onClick={() => setPassportVisibility(v.key)}
+                              title={v.desc}
+                              className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
+                                active
+                                  ? "bg-[var(--accent)] text-white border-[var(--accent)]"
+                                  : "border-[var(--border)] hover:bg-[var(--background)] opacity-70"
+                              }`}
+                            >
+                              {v.label}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     {/* Vignette */}

@@ -13,7 +13,7 @@ if env_path.exists():
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import projects, upload, pipeline
+from app.routes import projects, upload, pipeline, public
 
 app = FastAPI(
     title="UPRE Asset Intelligence API",
@@ -24,7 +24,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:3000", "http://127.0.0.1:3000",
+        "http://localhost:3001", "http://127.0.0.1:3001",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,6 +36,7 @@ app.add_middleware(
 app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
 app.include_router(upload.router, prefix="/api/upload", tags=["upload"])
 app.include_router(pipeline.router, prefix="/api/pipeline", tags=["pipeline"])
+app.include_router(public.router, prefix="/api/public", tags=["public"])
 
 
 @app.get("/api/health")

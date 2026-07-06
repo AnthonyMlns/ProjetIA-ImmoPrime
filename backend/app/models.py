@@ -14,6 +14,7 @@ class Project(BaseModel):
     assets_count: int = 0
     trashed: bool = False
     last_score: float | None = None
+    visibility: str = "private"  # private | public | gated — from the latest asset's AIF
 
 
 class ProjectCreate(BaseModel):
@@ -70,6 +71,11 @@ class AIFData(BaseModel):
     niveau_confiance: str = "FAIBLE"
     version: str = "1.0"
     created_at: str = ""
+    visibility: str = "private"  # private | public | gated
+
+
+class VisibilityUpdate(BaseModel):
+    visibility: str  # private | public | gated
 
 
 class PipelineResponse(BaseModel):
