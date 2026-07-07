@@ -14,12 +14,10 @@ from app.models import (
 )
 from app.services.extraction_schema import SCHEMA_FIELDS, FieldDef
 from app.services.llm_provider import extract, extract_pdf
-from app.services.storage import load as load_projects, save as save_projects
+from app.services.storage import load as load_projects, save as save_projects, DATA_DIR, PROJECTS_FILE
 
 router = APIRouter()
 
-DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "output"
-PROJECTS_FILE = DATA_DIR / "_projects.json"
 DECISION_TEXTS = {
     1: "AIF direct avec vérification mandataire",
     2: "AIF possible avec complément oral court",

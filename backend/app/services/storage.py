@@ -1,9 +1,15 @@
-"""Shared storage helpers — JSON persistence for _projects.json."""
+"""Shared storage helpers — JSON persistence for _projects.json.
+
+On Vercel, set DATA_DIR=/tmp to use ephemeral writable storage.
+Defaults to <project_root>/output/ for local development.
+"""
 
 import json
+import os
 from pathlib import Path
 
-PROJECTS_FILE: Path = Path(__file__).resolve().parent.parent.parent.parent / "output" / "_projects.json"
+DATA_DIR: Path = Path(os.getenv("DATA_DIR", Path(__file__).resolve().parent.parent.parent.parent / "output"))
+PROJECTS_FILE: Path = DATA_DIR / "_projects.json"
 
 
 def load() -> dict:

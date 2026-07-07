@@ -6,12 +6,9 @@ from fastapi import APIRouter, UploadFile, File, Form
 
 from app.services.sanitizer import sanitize
 from app.services.extractor import extract_content
-from app.services.storage import load as load_projects, save as save_projects, PROJECTS_FILE
+from app.services.storage import load as load_projects, save as save_projects, PROJECTS_FILE, DATA_DIR
 
 router = APIRouter()
-
-DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "output"
-DATA_DIR.mkdir(exist_ok=True)
 
 
 @router.post("/")
