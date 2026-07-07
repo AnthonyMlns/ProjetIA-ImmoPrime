@@ -15,6 +15,7 @@ from app.models import (
 from app.services.extraction_schema import SCHEMA_FIELDS, FieldDef
 from app.services.llm_provider import extract, extract_pdf
 from app.services.storage import load as load_projects, save as save_projects, DATA_DIR, PROJECTS_FILE
+from app.services.geodata import fetch_city_context, format_geo_context
 
 router = APIRouter()
 
@@ -174,6 +175,7 @@ async def enrichissement(req: EnrichissementRequest):
             break
 
     context_parts = []
+    ville_extracted = ""
     if extraction:
         blocs = extraction.get("blocs", {})
         for key in ("typologie", "ville", "surface_habitable", "nb_pieces",
@@ -183,8 +185,15 @@ async def enrichissement(req: EnrichissementRequest):
             val = blocs.get(key, {}).get("valeur")
             if val:
                 context_parts.append(f"{blocs[key]['label']}: {val}")
+        ville_extracted = blocs.get("ville", {}).get("valeur", "")
 
     context = "\n".join(context_parts) if context_parts else "Aucune donnee extraite."
+
+    geo_context = ""
+    if ville_extracted:
+        geo_data = await fetch_city_context(ville_extracted)
+        geo_context = format_geo_context(ville_extracted, geo_data)
+
     reponses = req.data.model_dump()
     reponses.pop("source", None)
 
@@ -192,18 +201,25 @@ async def enrichissement(req: EnrichissementRequest):
         "Tu es un analyste immobilier UPRE specialise dans la qualification d'actifs prime.\n\n"
         "### Donnees extraites du bien\n"
         f"{context}\n\n"
-        "### Reponses du mandataire\n"
     )
+    if geo_context:
+        prompt += f"{geo_context}\n\n"
+
+    prompt += "### Reponses du mandataire\n"
     for k, v in reponses.items():
         if v:
             prompt += f"- {k}: {v}\n"
 
     prompt += (
         "\nGenere les trois sections suivantes au format JSON strict:\n\n"
-        "1. **fit_fonctionnel** (2-3 phrases) : Analyse objective de la distribution, "
-        "des surfaces, de l'etat, du potentiel de transformation, de la rentabilite.\n"
-        "2. **fit_emotionnel** (2-3 phrases) : Analyse subjective de la lumiere, "
-        "des volumes, des matieres, de l'atmosphere, de la vue, du cachet.\n"
+        "1. **fit_fonctionnel** (3-4 phrases) : Analyse objective de la distribution, "
+        "des surfaces, de l'etat, du potentiel de transformation, de la rentabilite. "
+        "Inclus les atouts de la zone geographique : commerces, transports, ecoles, "
+        "attractivite du marche immobilier local, dynamisme economique.\n"
+        "2. **fit_emotionnel** (3-4 phrases) : Analyse subjective de la lumiere, "
+        "des volumes, des matieres, de l'atmosphere, de la vue, du cachet. "
+        "Insiste sur l'environnement du bien : paysage, qualite de vie, prestige "
+        "du quartier, patrimoine naturel ou architectural, ambiance locale.\n"
         "3. **intentions** : Pour chaque intention UPRE (Habiter, Representer, "
         "Transmettre, Generer, Vivre autrement), attribue un statut "
         "(PROBABLE, POSSIBLE, IMPROBABLE) et un niveau (dominant, secondaire, mineur).\n\n"
