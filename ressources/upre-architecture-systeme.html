@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UPRE — Architecture système</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-900:#0B1626;
+    --navy-800:#11203A;
+    --navy-700:#16294A;
+    --navy-650:#1B3056;
+    --cream:#F3EEE2;
+    --muted:#8FA0BC;
+    --muted-dim:#62718C;
+    --gold:#C9A227;
+    --gold-soft:#E4C66B;
+    --teal:#4FA690;
+    --coral:#D9714C;
+    --line:rgba(243,238,226,0.12);
+    --line-strong:rgba(243,238,226,0.22);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--navy-900);
+    color:var(--cream);
+    font-family:'Inter',sans-serif;
+    font-weight:400;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:0 28px;}
+  h1,h2,h3{font-family:'Fraunces',serif;font-weight:500;margin:0;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--gold-soft);
+  }
+  a{color:var(--gold-soft);text-decoration:none;border-bottom:1px solid var(--line-strong);}
+  a:hover{border-bottom-color:var(--gold-soft);}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    padding:96px 0 64px;
+    border-bottom:1px solid var(--line);
+    position:relative;
+  }
+  .hero::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:3px;
+    background:linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 80%, transparent);
+  }
+  .hero h1{
+    font-size:42px;
+    line-height:1.15;
+    margin-top:18px;
+    max-width:760px;
+    color:var(--cream);
+  }
+  .hero h1 em{color:var(--gold-soft); font-style:normal;}
+  .hero p.thesis{
+    font-size:17px;
+    color:var(--muted);
+    max-width:600px;
+    margin-top:20px;
+  }
+  .stat-strip{
+    display:flex;
+    gap:0;
+    margin-top:44px;
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+  .stat{
+    flex:1;
+    padding:18px 20px;
+    border-right:1px solid var(--line);
+  }
+  .stat:last-child{border-right:none;}
+  .stat .num{font-family:'IBM Plex Mono',monospace; font-size:24px; color:var(--gold-soft);}
+  .stat .label{font-size:12px; color:var(--muted); margin-top:4px;}
+
+  /* ---------- SECTIONS ---------- */
+  section{padding:64px 0;border-bottom:1px solid var(--line);}
+  section.no-border{border-bottom:none;}
+  .sec-head{margin-bottom:36px;}
+  .sec-head h2{font-size:26px;color:var(--cream);}
+  .sec-head p{color:var(--muted); font-size:15px; max-width:600px; margin-top:10px;}
+
+  /* ---------- OBJECTIFS ---------- */
+  .obj-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:18px;}
+  .obj-card{
+    background:var(--navy-800);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:22px;
+  }
+  .obj-card .rank{font-family:'IBM Plex Mono',monospace; color:var(--gold-soft); font-size:13px;}
+  .obj-card h3{font-size:18px; margin-top:10px; color:var(--cream);}
+  .obj-card p{font-size:14px; color:var(--muted); margin-top:8px;}
+
+  /* ---------- BUILDING DIAGRAM ---------- */
+  .building{
+    display:flex;
+    flex-direction:column;
+    border:1px solid var(--line-strong);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .floor{
+    display:grid;
+    grid-template-columns:200px 1fr;
+    border-bottom:1px solid var(--line);
+  }
+  .floor:last-child{border-bottom:none;}
+  .floor-label{
+    padding:22px 20px;
+    background:var(--navy-700);
+    border-right:1px solid var(--line-strong);
+  }
+  .floor-label .tag{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted); letter-spacing:0.05em;}
+  .floor-label h3{font-size:17px; margin-top:6px; color:var(--cream);}
+  .floor-body{padding:22px 24px; background:var(--navy-800);}
+  .floor-body p.desc{font-size:14px; color:var(--muted); margin:0 0 14px;}
+  .chip-row{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    padding:5px 10px;
+    border-radius:4px;
+    border:1px solid var(--line-strong);
+    color:var(--cream);
+    background:var(--navy-700);
+  }
+  .chip.arrow{border:none;background:none;color:var(--muted-dim);padding:5px 2px;}
+  .floor.roof .floor-label{background:linear-gradient(135deg,var(--navy-700),var(--navy-650));}
+  .floor.roof .floor-body{background:linear-gradient(135deg,var(--navy-800),var(--navy-700));}
+  .floor.penthouse .floor-label{border-right-color:var(--gold-soft);}
+  .floor.penthouse .tag{color:var(--gold-soft);}
+  .floor.foundation .floor-label{background:#0A1322;}
+  .floor.foundation .floor-body{background:#0D1A2C;}
+  .floor.foundation .tag{color:var(--teal);}
+  .building-caption{
+    display:flex; justify-content:space-between;
+    margin-top:14px; font-size:12px; color:var(--muted-dim);
+  }
+
+  /* ---------- MVP PIPELINE STEPS ---------- */
+  .steps{display:flex; align-items:stretch; gap:0; margin-top:8px; overflow-x:auto;}
+  .step{
+    flex:1; min-width:148px;
+    background:var(--navy-800);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:16px;
+    position:relative;
+  }
+  .step + .step{margin-left:28px;}
+  .step + .step::before{
+    content:"→";
+    position:absolute; left:-28px; top:50%; transform:translateY(-50%);
+    color:var(--gold-soft); font-size:18px;
+  }
+  .step .n{font-family:'IBM Plex Mono',monospace; color:var(--gold-soft); font-size:12px;}
+  .step h4{font-family:'Fraunces',serif; font-weight:500; font-size:15px; margin:8px 0 6px; color:var(--cream);}
+  .step p{font-size:12.5px; color:var(--muted); margin:0;}
+  .loop-note{
+    margin-top:18px;
+    display:flex; align-items:center; gap:10px;
+    font-size:13px; color:var(--teal);
+    border-top:1px dashed var(--line-strong);
+    padding-top:14px;
+  }
+
+  /* ---------- STACK ---------- */
+  .stack-grid{display:grid; grid-template-columns:1fr 1fr; gap:0; border:1px solid var(--line);}
+  .stack-row{
+    display:grid; grid-template-columns:170px 1fr;
+    border-bottom:1px solid var(--line);
+  }
+  .stack-grid > .stack-row:nth-last-child(1),
+  .stack-grid > .stack-row:nth-last-child(2){border-bottom:none;}
+  .stack-row .col{padding:16px 18px;}
+  .stack-row .col.layer{background:var(--navy-700); border-right:1px solid var(--line);}
+  .stack-row .col.layer .tag{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted);}
+  .stack-row .col.layer h4{font-size:14.5px; margin-top:4px; color:var(--cream); font-family:'Fraunces',serif; font-weight:500;}
+  .stack-row .col.tool{background:var(--navy-800);}
+  .stack-row .col.tool .toolname{font-family:'IBM Plex Mono',monospace; color:var(--gold-soft); font-size:13.5px;}
+  .stack-row .col.tool .why{font-size:12.5px; color:var(--muted); margin-top:6px;}
+  .stack-row .col.tool .not{font-size:11.5px; color:var(--coral); margin-top:6px;}
+  /* full width rows */
+  .stack-grid{display:block;}
+  .stack-grid .stack-row{display:grid;}
+
+  /* ---------- LOOPS (auto-incrémentation) ---------- */
+  .loop-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:18px;}
+  .loop-card{
+    background:var(--navy-800); border:1px solid var(--line); border-radius:6px; padding:20px;
+    border-top:2px solid var(--teal);
+  }
+  .loop-card .tag{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--teal);}
+  .loop-card h4{font-size:15px; margin:8px 0 6px; color:var(--cream); font-family:'Fraunces',serif; font-weight:500;}
+  .loop-card p{font-size:13px; color:var(--muted); margin:0;}
+
+  /* ---------- EVAL ---------- */
+  .eval-cols{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  .eval-col{background:var(--navy-800); border:1px solid var(--line); border-radius:6px; padding:22px;}
+  .eval-col .tag{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--gold-soft);}
+  .eval-col h4{font-size:16px; margin:8px 0 12px; color:var(--cream); font-family:'Fraunces',serif; font-weight:500;}
+  .eval-col ul{margin:0; padding-left:18px;}
+  .eval-col li{font-size:13.5px; color:var(--muted); margin-bottom:8px;}
+  .eval-col li::marker{color:var(--gold-soft);}
+
+  /* ---------- TIMELINE / PHASES ---------- */
+  .phase{
+    display:grid; grid-template-columns:48px 1fr 130px;
+    gap:18px; align-items:start;
+    padding:20px 0;
+    border-top:1px solid var(--line);
+  }
+  .phase:first-of-type{border-top:none;}
+  .phase .pn{
+    font-family:'IBM Plex Mono',monospace; color:var(--gold-soft);
+    font-size:18px; padding-top:2px;
+  }
+  .phase h4{font-size:16px; color:var(--cream); font-family:'Fraunces',serif; font-weight:500;}
+  .phase p{font-size:13.5px; color:var(--muted); margin:6px 0 0;}
+  .phase .cost{
+    font-family:'IBM Plex Mono',monospace; font-size:14px; color:var(--cream);
+    text-align:right; padding-top:2px;
+  }
+  .phase .cost .sub{display:block; font-size:11px; color:var(--muted-dim); margin-top:3px;}
+
+  /* ---------- COMPARE TABLE ---------- */
+  .compare{width:100%; border-collapse:collapse; margin-top:8px; font-size:13.5px;}
+  .compare th{
+    text-align:left; font-family:'IBM Plex Mono',monospace; font-size:11px;
+    color:var(--muted); text-transform:uppercase; letter-spacing:0.04em;
+    padding:10px 14px; border-bottom:1px solid var(--line-strong);
+  }
+  .compare td{padding:12px 14px; border-bottom:1px solid var(--line); color:var(--cream); vertical-align:top;}
+  .compare tr:last-child td{border-bottom:none;}
+  .compare td.dim{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted);}
+  .compare td.win{color:var(--gold-soft);}
+
+  /* ---------- FOOTER ---------- */
+  footer{padding:48px 0 80px; text-align:center;}
+  footer p{font-size:12.5px; color:var(--muted-dim);}
+
+  @media (max-width:760px){
+    .hero h1{font-size:30px;}
+    .stat-strip{flex-direction:column;}
+    .stat{border-right:none; border-bottom:1px solid var(--line);}
+    .obj-grid, .eval-cols, .loop-grid{grid-template-columns:1fr;}
+    .floor{grid-template-columns:1fr;}
+    .floor-label{border-right:none; border-bottom:1px solid var(--line-strong);}
+    .stack-row{grid-template-columns:1fr;}
+    .stack-row .col.layer{border-right:none; border-bottom:1px solid var(--line);}
+    .phase{grid-template-columns:32px 1fr; }
+    .phase .cost{grid-column:2; text-align:left; margin-top:6px;}
+    .steps{flex-direction:column;}
+    .step + .step{margin-left:0; margin-top:28px;}
+    .step + .step::before{content:"↓"; left:50%; top:-26px; transform:translateX(-50%);}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="eyebrow">Note interne · Architecture &amp; chiffrage build</div>
+    <h1>UPRE — du dépôt d'actif à <em>l'opportunité qualifiée</em></h1>
+    <p class="thesis">
+      Une seule chaîne, quatre couches imbriquées : un pipeline actif qui transforme une fiche
+      commerciale brute en passeport exploitable, un pipeline intention qui qualifie ce qu'exprime
+      un acquéreur, une couche de passeport &amp; accès qui filtre ce qui est montré à qui, et une
+      mémoire persistante qui empêche l'actif de repartir de zéro. Conçu pour être chiffré et
+      construit en interne — sans plaquer une solution prête à l'emploi.
+    </p>
+    <div class="stat-strip">
+      <div class="stat"><div class="num">300</div><div class="label">actifs prime — cible POC</div></div>
+      <div class="stat"><div class="num">04</div><div class="label">couches du système</div></div>
+      <div class="stat"><div class="num">01–04</div><div class="label">tâches prioritaires (MVP)</div></div>
+      <div class="stat"><div class="num">sept.</div><div class="label">2026 — horizon POC</div></div>
+    </div>
+  </header>
+
+  <!-- OBJECTIFS -->
+  <section>
+    <div class="sec-head">
+      <h2>Ce que « mieux » veut dire ici</h2>
+      <p>Pas moins cher — plus lisible, plus prouvé, plus possédé. Classement retenu pour cette proposition.</p>
+    </div>
+    <div class="obj-grid">
+      <div class="obj-card">
+        <div class="rank">01 — priorité</div>
+        <h3>Clarté &amp; présentation</h3>
+        <p>Chaque euro relié à un livrable mesurable. Aucun module « inclus / offert » sans définition de ce qui est livré.</p>
+      </div>
+      <div class="obj-card">
+        <div class="rank">02</div>
+        <h3>Robustesse prouvée</h3>
+        <p>Un taux d'exactitude mesuré avant l'engagement, sur de vraies R1 — pas une promesse de principe.</p>
+      </div>
+      <div class="obj-card">
+        <div class="rank">03</div>
+        <h3>Propriété IP &amp; données</h3>
+        <p>Schéma, code et données hébergés et possédés par UPRE. Aucune frontière à « formaliser plus tard ».</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- LE SYSTEME EN COUPE -->
+  <section>
+    <div class="sec-head">
+      <h2>Le système, en coupe</h2>
+      <p>
+        Lu comme un immeuble plutôt qu'un organigramme : la confidentialité monte à l'étage le plus
+        haut, la donnée brute entre au rez-de-chaussée, la mémoire porte l'ensemble en sous-sol,
+        et l'évaluation surveille depuis le toit.
+      </p>
+    </div>
+
+    <div class="building">
+
+      <div class="floor roof">
+        <div class="floor-label">
+          <div class="tag">toit · monitoring</div>
+          <h3>Évaluation</h3>
+        </div>
+        <div class="floor-body">
+          <p class="desc">Surveille les trois autres étages en continu — ne produit aucune donnée, ne fait que mesurer.</p>
+          <div class="chip-row">
+            <span class="chip">taux d'exactitude</span>
+            <span class="chip">dérive d'extraction</span>
+            <span class="chip">taux de Match utile</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="floor penthouse">
+        <div class="floor-label">
+          <div class="tag">dernier étage · accès restreint</div>
+          <h3>Passeport &amp; accès</h3>
+        </div>
+        <div class="floor-body">
+          <p class="desc">Filtre ce qui existe déjà selon le niveau d'accès du visiteur — ne crée rien, ne fait que révéler.</p>
+          <div class="chip-row">
+            <span class="chip">Vignette</span><span class="chip arrow">·</span>
+            <span class="chip">Note d'Actif</span><span class="chip arrow">·</span>
+            <span class="chip">Asset Briefing</span><span class="chip arrow">·</span>
+            <span class="chip">NDA &amp; watermark</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="floor">
+        <div class="floor-label">
+          <div class="tag">1er étage · réception des intentions</div>
+          <h3>Pipeline intention</h3>
+        </div>
+        <div class="floor-body">
+          <p class="desc">Tourne en parallèle du rez-de-chaussée — se connecte à lui pour interroger les actifs disponibles.</p>
+          <div class="chip-row">
+            <span class="chip">Qualification</span><span class="chip arrow">→</span>
+            <span class="chip">Gate</span><span class="chip arrow">→</span>
+            <span class="chip">Fit</span><span class="chip arrow">→</span>
+            <span class="chip">Match (Go / No Go)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="floor">
+        <div class="floor-label">
+          <div class="tag">rez-de-chaussée · entrée des actifs</div>
+          <h3>Pipeline actif</h3>
+        </div>
+        <div class="floor-body">
+          <p class="desc">Le MVP — tâches 1 à 4. Détail des étapes ci-dessous.</p>
+          <div class="chip-row">
+            <span class="chip">Ingestion</span><span class="chip arrow">→</span>
+            <span class="chip">Extraction</span><span class="chip arrow">→</span>
+            <span class="chip">Score</span><span class="chip arrow">→</span>
+            <span class="chip">AIF</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="floor foundation">
+        <div class="floor-label">
+          <div class="tag">sous-sol · substrat</div>
+          <h3>Mémoire (AKG)</h3>
+        </div>
+        <div class="floor-body">
+          <p class="desc">Porte tous les étages — chaque écriture, à n'importe quel niveau, s'y enregistre versionnée.</p>
+          <div class="chip-row">
+            <span class="chip">versioning</span>
+            <span class="chip">objections &amp; retours terrain</span>
+            <span class="chip">auto-incrémentation</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="building-caption">
+      <span>L'actif entre en bas, l'intention entre au milieu, la confidentialité décide en haut.</span>
+      <span>Rien ne « repart de zéro » — tout redescend au sous-sol.</span>
+    </div>
+  </section>
+
+  <!-- MVP STEPS -->
+  <section>
+    <div class="sec-head">
+      <h2>Le rez-de-chaussée, en détail — tâches 1 à 4</h2>
+      <p>Le seul périmètre que ce build engage en premier. Tout le reste de l'immeuble attend que cet étage tienne.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="n">01</div>
+        <h4>Ingestion</h4>
+        <p>Classe chaque document, rattache au bon actif par n° de mandat, déduplique.</p>
+      </div>
+      <div class="step">
+        <div class="n">02</div>
+        <h4>Extraction</h4>
+        <p>~80 champs normalisés contre un schéma unique — prix, typologie, DPE, surfaces, copropriété.</p>
+      </div>
+      <div class="step">
+        <div class="n">03</div>
+        <h4>Score</h4>
+        <p>Mesure la complétude réelle, décide : AIF direct / complément oral / entretien / non traitable.</p>
+      </div>
+      <div class="step">
+        <div class="n">04</div>
+        <h4>AIF</h4>
+        <p>Fiche de Valeur versionnée — distingue documenté, déduit, déclaratif, à vérifier.</p>
+      </div>
+    </div>
+    <div class="loop-note">↻ Si le score juge la matière insuffisante, l'étape 3 renvoie vers l'enrichissement vocal mandataire (tâche 3) — qui ré-injecte des données et redéclenche le score, plutôt que d'avancer une fiche incomplète.</div>
+  </section>
+
+  <!-- STACK -->
+  <section>
+    <div class="sec-head">
+      <h2>Stack technique, couche par couche</h2>
+      <p>Choisie pour 300 actifs et un opérateur, pas pour une promesse de scale. Chaque non-choix est volontaire.</p>
+    </div>
+
+    <div class="stack-grid">
+
+      <div class="stack-row">
+        <div class="col layer"><div class="tag">extraction</div><h4>Moteur de lecture</h4></div>
+        <div class="col tool">
+          <div class="toolname">LLM vision (API)</div>
+          <div class="why">Lit R1, jauges DPE, plans — extraction contre le schéma. Le choix de fournisseur se fait sur le taux d'exactitude mesuré en Phase 0, pas sur la marque.</div>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="col layer"><div class="tag">pré-traitement</div><h4>Documents</h4></div>
+        <div class="col tool">
+          <div class="toolname">PyMuPDF / pdf2image</div>
+          <div class="why">Rasterise les pages PDF avant envoi au modèle, conserve le nom de fichier comme source.</div>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="col layer"><div class="tag">orchestration</div><h4>Pipeline</h4></div>
+        <div class="col tool">
+          <div class="toolname">Python — machine à états</div>
+          <div class="why">Boucles et branchements explicites. Une lib comme LangGraph peut formaliser les états si utile.</div>
+          <div class="not">Pas de framework d'agents lourd — 300 actifs ne le justifient pas.</div>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="col layer"><div class="tag">stockage</div><h4>Master &amp; mémoire</h4></div>
+        <div class="col tool">
+          <div class="toolname">PostgreSQL + pgvector</div>
+          <div class="why">Tient le master, l'AIF versionné, et la similarité (déduplication, matching futur) via une extension, pas un service à part.</div>
+          <div class="not">Pas de base graphe dédiée (Neo4j) — complexité prématurée à cette échelle.</div>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="col layer"><div class="tag">coffre fichiers</div><h4>Documents bruts</h4></div>
+        <div class="col tool">
+          <div class="toolname">Stockage objet S3-compatible — France</div>
+          <div class="why">Scaleway / OVH. Argument RGPD direct, pas une clause de devis à formaliser plus tard.</div>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="col layer"><div class="tag">vocal</div><h4>Enrichissement mandataire</h4></div>
+        <div class="col tool">
+          <div class="toolname">Whisper (self-hébergé)</div>
+          <div class="why">Transcription FR fiable, qualifiée « déclaration orale mandataire » avant ré-injection au score.</div>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="col layer"><div class="tag">interface</div><h4>Revue opérateur</h4></div>
+        <div class="col tool">
+          <div class="toolname">Next.js / React</div>
+          <div class="why">Revue, correction, gates de validation humaine — la supervision exigée à chaque étape sensible.</div>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="col layer"><div class="tag">évaluation</div><h4>Harnais de test</h4></div>
+        <div class="col tool">
+          <div class="toolname">Script Python — diff champ à champ</div>
+          <div class="why">Compare extraction vs vérité terrain sur 20–30 R1. C'est le livrable de la Phase 0.</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- MODELES -->
+  <section>
+    <div class="sec-head">
+      <h2>Sélection des modèles — par rôle, pas par défaut</h2>
+      <p>Pas un seul LLM partout. Chaque étage du pipeline a un profil de difficulté différent — la Phase 0 compare plusieurs candidats sur les mêmes R1 avant de fixer un choix.</p>
+    </div>
+
+    <div class="stack-grid">
+
+      <div class="stack-row">
+        <div class="col layer"><div class="tag">étage 0</div><h4>Classification</h4></div>
+        <div class="col tool">
+          <div class="toolname">Modèle léger / rapide</div>
+          <div class="why">Identifier « R1 » / « DPE » / « plan » est peu ambigu — pas besoin du modèle le plus cher pour trier des documents.</div>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="col layer"><div class="tag">étage 1</div><h4>Extraction de champs</h4></div>
+        <div class="col tool">
+          <div class="toolname">Modèle vision le plus capable — à départager en Phase 0</div>
+          <div class="why">Prix, DPE, surfaces ne tolèrent pas l'approximation. C'est l'étage où le taux d'exactitude mesuré sur 20–30 R1 tranche entre les candidats — pas une préférence de marque.</div>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="col layer"><div class="tag">étage 2</div><h4>Transcription vocale</h4></div>
+        <div class="col tool">
+          <div class="toolname">Whisper (self-hébergé)</div>
+          <div class="why">Sort du débat entre LLM généralistes — c'est un rôle de transcription dédié, pas un rôle de raisonnement.</div>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="col layer"><div class="tag">étage 3</div><h4>Synthèse &amp; rédaction</h4></div>
+        <div class="col tool">
+          <div class="toolname">Modèle léger ou intermédiaire</div>
+          <div class="why">Une fois les champs propres, rédiger l'AIF ou la Note d'Actif converge en qualité entre modèles — le gain d'un modèle premium devient marginal.</div>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="col layer"><div class="tag">étage 4</div><h4>Gate + Fit + Match</h4></div>
+        <div class="col tool">
+          <div class="toolname">Modèle haut de gamme</div>
+          <div class="why">Comparer une intention à un actif et justifier un Go / No Go est un jugement nuancé, pas une extraction factuelle — la capacité de raisonnement redevient déterminante.</div>
+          <div class="not">Escalade conditionnelle recommandée : modèle léger en première passe, escalade vers le modèle fort seulement si le score de confiance est bas.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="loop-note">↻ Le harnais de la Phase 0 doit être agnostique du fournisseur dès le départ — une couche d'abstraction simple (<span class="mono" style="color:var(--gold-soft);">extract(document, model_id)</span>) plutôt qu'un appel câblé à une seule API, pour comparer plusieurs candidats sur le même jeu de test et changer de modèle sans réécrire le pipeline.</div>
+  </section>
+
+  <!-- AUTO-INCREMENTATION -->
+  <section>
+    <div class="sec-head">
+      <h2>Auto-incrémentation</h2>
+      <p>Trois boucles distinctes qui écrivent dans le même sous-sol — aucune ne remplace les deux autres.</p>
+    </div>
+    <div class="loop-grid">
+      <div class="loop-card">
+        <div class="tag">boucle courte</div>
+        <h4>Donnée actif</h4>
+        <p>Chaque document, réponse mandataire ou correction crée une nouvelle version de l'AIF — jamais un écrasement. Le score se recalcule à chaque version.</p>
+      </div>
+      <div class="loop-card">
+        <div class="tag">boucle moyenne</div>
+        <h4>Donnée relationnelle</h4>
+        <p>Chaque Match, objection, visite enrichit le profil actif et acquéreur. Le Fit devient plus précis avec l'historique — par retrieval sur le graphe, pas par fine-tuning.</p>
+      </div>
+      <div class="loop-card">
+        <div class="tag">boucle longue</div>
+        <h4>Corpus mandataire</h4>
+        <p>Les questions posées et réponses obtenues affinent le gabarit de questions pour les actifs suivants du même mandataire ou de la même typologie.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- EVALUATION -->
+  <section>
+    <div class="sec-head">
+      <h2>Évaluation</h2>
+      <p>Le différenciateur face à Substi : eux promettent, ce système mesure — avant l'engagement, puis en continu.</p>
+    </div>
+    <div class="eval-cols">
+      <div class="eval-col">
+        <div class="tag">ponctuelle — Phase 0</div>
+        <h4>Avant tout engagement de build</h4>
+        <ul>
+          <li>20–30 vraies R1 avec vérité terrain saisie à la main</li>
+          <li>Comparaison champ par champ : prix, typologie, DPE, surfaces</li>
+          <li>Sortie : un taux d'exactitude — le seuil d'acceptation contractuel</li>
+        </ul>
+      </div>
+      <div class="eval-col">
+        <div class="tag">continue — en production</div>
+        <h4>Jamais proposée par Substi dans le devis</h4>
+        <ul>
+          <li><strong style="color:var(--cream); font-weight:500;">Dérive d'extraction</strong> — ré-évaluation périodique sur le même jeu fixe</li>
+          <li><strong style="color:var(--cream); font-weight:500;">Décisions correctes</strong> — combien de « AIF direct » tiennent sans correction</li>
+          <li><strong style="color:var(--cream); font-weight:500;">Match utile</strong> — combien de Go aboutissent à une visite ou un NDA signé</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHASAGE -->
+  <section>
+    <div class="sec-head">
+      <h2>Phasage</h2>
+      <p>Chaque phase est un livrable fermé avec un prix ferme — pas un forfait global sur une promesse.</p>
+    </div>
+
+    <div class="phase">
+      <div class="pn">0</div>
+      <div>
+        <h4>Preuve d'extraction</h4>
+        <p>Jeu de test sur de vraies R1 UPRE, taux d'exactitude livré. Engage ou arrête la suite pour une somme dérisoire.</p>
+      </div>
+      <div class="cost">2–4 k€<span class="sub">HT · 1–2 sem.</span></div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">1</div>
+      <div>
+        <h4>MVP — tâches 1 à 4</h4>
+        <p>Schéma master, ingestion, extraction, scoring, AIF templatée, UI opérateur, harnais d'éval.</p>
+      </div>
+      <div class="cost">12–30 k€<span class="sub">HT · 25–40 j</span></div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">2</div>
+      <div>
+        <h4>Vocal &amp; passeport</h4>
+        <p>Enrichissement mandataire, Vignette / Note d'Actif / Asset Briefing, premières règles NDA.</p>
+      </div>
+      <div class="cost">À chiffrer<span class="sub">après Phase 1</span></div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">3</div>
+      <div>
+        <h4>Intention &amp; Match</h4>
+        <p>Qualification d'intention, Gate+Fit, Match — honnêtement dépendant du volume d'intentions captées.</p>
+      </div>
+      <div class="cost">À chiffrer<span class="sub">selon volume réel</span></div>
+    </div>
+  </section>
+
+  <!-- HYPERCARE -->
+  <section>
+    <div class="sec-head">
+      <h2>Hypercare — à chaque mise en production</h2>
+      <p>S'applique après la release de chaque phase, pas seulement à la fin du projet — la Phase 0 a son hypercare, le MVP a le sien, et ainsi de suite.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="n">Semaine 1</div>
+        <h4>Point quotidien</h4>
+        <p>Feedback instantané sur les premiers cas réels, ajustements rapides du pipeline ou des prompts.</p>
+      </div>
+      <div class="step">
+        <div class="n">Semaine 2+</div>
+        <h4>Point hebdomadaire</h4>
+        <p>Surveillance plus large, suivi des métriques de la couche Évaluation, espacement progressif.</p>
+      </div>
+    </div>
+
+    <div class="loop-note">↻ Répété à chaque phase : Phase 0 → hypercare propre, Phase 1 (MVP) → hypercare propre, Phase 2 et 3 de même. Le rythme ne se relâche qu'après la semaine 1 de chaque release, jamais avant.</div>
+  </section>
+
+  <!-- STRUCTURE TARIFAIRE -->
+  <section>
+    <div class="sec-head">
+      <h2>Structure tarifaire retenue</h2>
+      <p>Un point d'entrée aligné sur le marché, sans prix fixe qui absorbe le risque de dépassement à ta place.</p>
+    </div>
+
+    <div class="phase">
+      <div class="pn">A</div>
+      <div>
+        <h4>Phase 0 — au forfait</h4>
+        <p>Preuve d'extraction sur de vraies R1 UPRE. Prix fermé, livrable fermé.</p>
+      </div>
+      <div class="cost">2–4 k€<span class="sub">HT · one-shot</span></div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">B</div>
+      <div>
+        <h4>Build mensualisé — jusqu'à livraison</h4>
+        <p>Le mensuel finance du développement actif, pas de l'exploitation. Pas de date butoir fixe : si le build glisse, le mensuel continue plutôt que d'être absorbé gratuitement.</p>
+      </div>
+      <div class="cost">2 500 €<span class="sub">HT/mois · 3–4 mois visés</span></div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">C</div>
+      <div>
+        <h4>Mensualisation — exploitation</h4>
+        <p>Même montant, autre objet : maintenance, évolutions, surveillance des métriques de la couche Évaluation.</p>
+      </div>
+      <div class="cost">2 500 €<span class="sub">HT/mois · ensuite</span></div>
+    </div>
+
+    <div class="loop-note">↻ Le passage de B à C se déclenche sur les <strong style="color:var(--cream); font-weight:500;">mêmes critères d'acceptation chiffrés</strong> que la Phase 0 — le taux d'exactitude validé sur le jeu de test — jamais sur une impression de « c'est prêt ». C'est ce qui évite de recréer le flou reproché à Substi sur la définition de « mission remplie ».</div>
+
+    <table class="compare" style="margin-top:28px;">
+      <tr><th>Sur 12 mois</th><th>Substi</th><th>Cette structure</th></tr>
+      <tr>
+        <td class="dim">déclenchement du récurrent</td>
+        <td>À la mise en production du POC</td>
+        <td class="win">Dès le premier mois de build</td>
+      </tr>
+      <tr>
+        <td class="dim">total cash sur 12 mois</td>
+        <td>10 k€ + ~8 mois d'abonnement ≈ <strong style="color:var(--cream); font-weight:500;">30 k€</strong></td>
+        <td class="win">Phase 0 + 4 mois build + 8 mois exploitation ≈ <strong style="color:var(--gold-soft); font-weight:500;">33 k€</strong></td>
+      </tr>
+      <tr>
+        <td class="dim">point d'entrée perçu</td>
+        <td>10 k€ affichés</td>
+        <td class="win">Équivalent, sans gros chèque initial</td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- COMPARAISON -->
+  <section class="no-border">
+    <div class="sec-head">
+      <h2>Face au devis Substi</h2>
+      <p>Le prix n'est pas l'axe de comparaison qui compte — celui-ci l'est.</p>
+    </div>
+    <table class="compare">
+      <tr><th>Critère</th><th>Substi</th><th>Cette proposition</th></tr>
+      <tr>
+        <td class="dim">acceptation</td>
+        <td>« Remboursement si une mission n'est pas remplie » — non défini</td>
+        <td class="win">Taux d'exactitude chiffré sur de vraies R1, avant engagement</td>
+      </tr>
+      <tr>
+        <td class="dim">IP &amp; données</td>
+        <td>Frontière IP/Substi « formalisée à la réunion de conception »</td>
+        <td class="win">Schéma, code, données possédés par UPRE dès la Phase 0</td>
+      </tr>
+      <tr>
+        <td class="dim">séquencement</td>
+        <td>6 employés couvrant tout le workflow d'emblée</td>
+        <td class="win">MVP isolé d'abord (tâches 1–4), reste chiffré après preuve</td>
+      </tr>
+      <tr>
+        <td class="dim">coût</td>
+        <td>10 k€ setup + 2,5 k€/mois</td>
+        <td>2–4 k€ (Phase 0) puis 12–30 k€ (MVP) + maintenance ~50–300 €/mois</td>
+      </tr>
+    </table>
+  </section>
+
+  <footer>
+    <p>UPRE — Unique Prime Real Estate · note interne de chiffrage, version de travail.</p>
+  </footer>
+
+</div>
+</body>
+</html>
