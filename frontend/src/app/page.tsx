@@ -271,17 +271,31 @@ export default function Home() {
     setLoading(false);
   };
 
+  const [enrichNotes, setEnrichNotes] = useState("");
+  const [enrichAttachments, setEnrichAttachments] = useState<{ name: string; size: number }[]>([]);
+  const enrichFileRef = useRef<HTMLInputElement>(null);
+
+  const handleEnrichUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selected || !e.target.files?.length) return;
+    for (const file of Array.from(e.target.files)) {
+      try {
+        const res = await api.uploadEnrichissement(selected, file);
+        if (res.success) {
+          setEnrichAttachments((prev) => [...prev, res.file]);
+          addLog(`Document ajouté: ${res.file.name}`);
+        }
+      } catch { addLog(`Erreur upload ${file.name}`); }
+    }
+    e.target.value = "";
+  };
+
   const runEnrichissement = async () => {
     if (!selected) return;
     setLoading(true);
     try {
       const data: EnrichissementData = {
-        motivation: (document.getElementById("q1") as HTMLTextAreaElement)?.value || "",
-        anciennete: (document.getElementById("q2") as HTMLTextAreaElement)?.value || "",
-        prix_min: (document.getElementById("q3") as HTMLTextAreaElement)?.value || "",
-        travaux: (document.getElementById("q4") as HTMLTextAreaElement)?.value || "",
-        histoire: (document.getElementById("q5") as HTMLTextAreaElement)?.value || "",
-        source: "déclaration orale mandataire",
+        notes: enrichNotes,
+        source: "declaration orale mandataire",
       };
       const res = await api.pipeline.enrichissement(selected, data);
       if (res.success) {
@@ -307,14 +321,15 @@ export default function Home() {
         fit_fonctionnel: enrichResult?.fit_fonctionnel || "À documenter",
         fit_emotionnel: enrichResult?.fit_emotionnel || "À documenter",
         intentions: enrichResult?.intentions || {},
-        niveau_confiance: "FAIBLE",
+        qualite: { note: 0, criteres: [] },
         version: "1.0",
         created_at: new Date().toISOString(),
       };
       const res = await api.pipeline.aif(selected, data);
       if (res.success) {
         setAifResult(res.data);
-        addLog(`AIF généré — ${aifForm.nom_actif || "Actif UPRE"} — Confiance: ${res.data.aif.niveau_confiance}`);
+        const q = res.data.aif.qualite;
+        addLog(`AIF généré — ${aifForm.nom_actif || "Actif UPRE"} — Note: ${q?.note?.toFixed(1) || "?"}/5`);
       }
     } catch { addLog("Erreur génération AIF"); }
     setLoading(false);
@@ -594,9 +609,14 @@ export default function Home() {
                           <span className="text-xs opacity-40">{(f.size / 1024).toFixed(1)} KB</span>
                           {!f.blocked && (
                             (f as any).extraction ? (
-                              <button onClick={() => { setExtraction((f as any).extraction); setStage("controle"); }} className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-[var(--badge-ok)]/30 text-[var(--badge-ok)] hover:bg-[var(--badge-ok)]/10 transition-colors shrink-0">
-                                <CheckCircle2 size={12} /> Voir resultat
-                              </button>
+                              <div className="flex gap-1.5 shrink-0">
+                                <button onClick={() => { runControlR1(f.name); setStage("controle"); }} className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-[var(--accent)]/40 text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors">
+                                  <RefreshCw size={12} /> Ré-analyser
+                                </button>
+                                <button onClick={() => { setExtraction((f as any).extraction); setStage("controle"); }} className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-[var(--badge-ok)]/30 text-[var(--badge-ok)] hover:bg-[var(--badge-ok)]/10 transition-colors">
+                                  <CheckCircle2 size={12} /> Voir resultat
+                                </button>
+                              </div>
                             ) : (
                               <button onClick={() => { runControlR1(f.name); setStage("controle"); }} className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-[var(--accent)]/40 text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors shrink-0">
                                 <Search size={12} /> Analyser
@@ -678,9 +698,14 @@ export default function Home() {
                           <FileText size={16} className="opacity-40 shrink-0" />
                           <span className="flex-1 text-sm truncate">{f.name}</span>
                           {cached ? (
-                            <button onClick={() => setExtraction(cached)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-[var(--badge-ok)]/30 text-[var(--badge-ok)] hover:bg-[var(--badge-ok)]/10 transition-colors shrink-0">
-                              <CheckCircle2 size={12} /> Voir resultat
-                            </button>
+                            <div className="flex gap-1.5 shrink-0">
+                              <button onClick={() => runControlR1(f.name)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-[var(--accent)]/40 text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors">
+                                <RefreshCw size={12} /> Ré-analyser
+                              </button>
+                              <button onClick={() => setExtraction(cached)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-[var(--badge-ok)]/30 text-[var(--badge-ok)] hover:bg-[var(--badge-ok)]/10 transition-colors">
+                                <CheckCircle2 size={12} /> Voir resultat
+                              </button>
+                            </div>
                           ) : (
                             <button onClick={() => runControlR1(f.name)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-[var(--accent)]/40 text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors shrink-0">
                               <Search size={12} /> Analyser
@@ -709,12 +734,6 @@ export default function Home() {
                         </div>
                       ))}
                     </div>
-                    <div>
-                      <h4 className="text-xs font-semibold uppercase tracking-wider opacity-40 mb-2">Questions au mandataire</h4>
-                      <ol className="space-y-1 text-sm opacity-70">
-                        {extraction.questions.map((q, i) => <li key={i}>{i + 1}. {q}</li>)}
-                      </ol>
-                    </div>
                     <button onClick={() => setStage("enrichissement")} className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-[var(--accent)] text-white font-medium hover:opacity-90">
                       Continuer <ChevronRight size={14} />
                     </button>
@@ -734,12 +753,32 @@ export default function Home() {
 
                 {extraction ? (
                   <div className="space-y-4">
-                    {extraction.questions.map((q, i) => (
-                      <div key={i}>
-                        <label className="text-sm font-medium block mb-1">{q}</label>
-                        <textarea id={`q${i + 1}`} className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm resize-none h-16 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30" placeholder="Reponse du mandataire..." />
+                    <div>
+                      <label className="text-sm font-medium block mb-1">Notes du mandataire</label>
+                      <textarea value={enrichNotes} onChange={(e) => setEnrichNotes(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm resize-none h-32 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+                        placeholder="Le mandataire peut tout écrire ici : contexte, historique, particularités, prix, travaux, motivations..."
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium block mb-1">Documents complémentaires (photos, plans, diagnostics...)</label>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => enrichFileRef.current?.click()}
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--accent)]/40 text-[var(--accent)] text-sm hover:bg-[var(--accent)]/10 transition-colors">
+                          <Upload size={14} /> Ajouter des fichiers
+                        </button>
+                        <input ref={enrichFileRef} type="file" multiple accept=".pdf,.docx,.doc,.txt,.jpg,.jpeg,.png" onChange={handleEnrichUpload} className="hidden" />
                       </div>
-                    ))}
+                      {enrichAttachments.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {enrichAttachments.map((a, i) => (
+                            <div key={i} className="flex items-center gap-2 text-xs opacity-60">
+                              <FileText size={12} /> {a.name} <span className="opacity-40">({(a.size / 1024).toFixed(1)} KB)</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <p className="text-sm text-[var(--muted)] italic">Aucune extraction disponible. Analysez d'abord un document dans le Controle R1.</p>
@@ -835,15 +874,41 @@ export default function Home() {
 
                 {aifResult && (
                   <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${aifResult.aif.niveau_confiance === "ÉLEVÉ" ? "bg-green-500/10 text-green-600 dark:text-green-400" : aifResult.aif.niveau_confiance === "MOYEN" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" : "bg-red-500/10 text-red-600 dark:text-red-400"}`}>
-                        Confiance: {aifResult.aif.niveau_confiance}
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className={`text-sm font-bold ${(aifResult.aif.qualite?.note ?? 0) >= 4 ? "text-green-600 dark:text-green-400" : (aifResult.aif.qualite?.note ?? 0) >= 2.5 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}>
+                        {aifResult.aif.qualite?.note?.toFixed(1) || "?"} / 5
                       </span>
+                      <div className="flex gap-1">
+                        {[1,2,3,4,5].map((s) => (
+                          <div key={s} className={`w-2.5 h-2.5 rounded-full ${s <= Math.round(aifResult.aif.qualite?.note ?? 0) ? "bg-[var(--accent)]" : "bg-[var(--border)]"}`} />
+                        ))}
+                      </div>
                       <span className="text-xs px-2.5 py-0.5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] font-medium">
                         v{aifResult.aif.version}
                       </span>
                       <Shield size={14} className="text-[var(--muted)]" />
                     </div>
+
+                    {/* Critères qualitatifs */}
+                    {aifResult.aif.qualite?.criteres?.length > 0 && (
+                      <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider opacity-40 mb-3">Critères de qualité</h3>
+                        <div className="space-y-2">
+                          {aifResult.aif.qualite.criteres.map((c, i) => (
+                            <div key={i}>
+                              <div className="flex items-center justify-between text-sm mb-0.5">
+                                <span className="font-medium">{c.label}</span>
+                                <span className={`font-bold ${c.score >= 4 ? "text-green-600 dark:text-green-400" : c.score >= 2.5 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}>{c.score}/5</span>
+                              </div>
+                              <div className="w-full h-1.5 rounded-full bg-[var(--border)] overflow-hidden">
+                                <div className="h-full rounded-full bg-[var(--accent)] transition-all" style={{ width: `${(c.score / 5) * 100}%` }} />
+                              </div>
+                              {c.commentaire && <p className="text-xs opacity-50 mt-0.5">{c.commentaire}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Publication sur le site */}
                     <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--surface)]">
@@ -895,6 +960,39 @@ export default function Home() {
                         </button>
                       </div>
                       <pre className="text-xs opacity-70 whitespace-pre-wrap font-mono max-h-64 overflow-y-auto">{aifResult.note_actif}</pre>
+                    </div>
+
+                    {/* Annonce mandataire */}
+                    <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-semibold">📰 Annonce <span className="text-xs font-normal opacity-40">(version mandataire)</span></h3>
+                        <button onClick={() => downloadText(aifResult.annonce_mandataire, `annonce_${aifForm.nom_actif || "actif"}.txt`)} className="text-xs flex items-center gap-1 text-[var(--accent)] hover:underline">
+                          <Download size={12} /> Télécharger
+                        </button>
+                      </div>
+                      <p className="text-sm opacity-70 whitespace-pre-wrap">{aifResult.annonce_mandataire}</p>
+                    </div>
+
+                    {/* Parole client */}
+                    <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-semibold">💬 Parole du propriétaire <span className="text-xs font-normal opacity-40">(comme si le client parlait de son bien)</span></h3>
+                        <button onClick={() => downloadText(aifResult.parole_client, `parole_${aifForm.nom_actif || "actif"}.txt`)} className="text-xs flex items-center gap-1 text-[var(--accent)] hover:underline">
+                          <Download size={12} /> Télécharger
+                        </button>
+                      </div>
+                      <p className="text-sm opacity-70 whitespace-pre-wrap italic">"{aifResult.parole_client}"</p>
+                    </div>
+
+                    {/* Note institutionnelle */}
+                    <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-500/[0.02]">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-semibold flex items-center gap-2">🏦 Note institutionnelle <span className="text-xs font-normal opacity-40">(conciergeries, family offices, banques privées)</span></h3>
+                        <button onClick={() => downloadText(aifResult.note_institutionnelle, `note_institutionnelle_${aifForm.nom_actif || "actif"}.txt`)} className="text-xs flex items-center gap-1 text-[var(--accent)] hover:underline">
+                          <Download size={12} /> Télécharger
+                        </button>
+                      </div>
+                      <p className="text-sm opacity-70 whitespace-pre-wrap">{aifResult.note_institutionnelle}</p>
                     </div>
 
                     {/* Asset Briefing */}

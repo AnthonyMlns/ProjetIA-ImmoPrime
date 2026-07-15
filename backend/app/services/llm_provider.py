@@ -50,7 +50,6 @@ _REGEX_RULES: dict[str, str] = {
     "ville":           r"(?i)paris|lyon|marseille|bordeaux|nice|cannes|aix[- ]en[- ]provence|strasbourg|lille|toulouse|nantes|montpellier|antibes|neuilly|boulogne|saint[- ]cloud|saint[- ]germain|versailles|fontainebleau|deauville|trouville|meg[eè]ve|courchevel|chamonix|biarritz|saint[- ]tropez|ramatuelle|gassin|cap[- ]ferret|cap[- ]d[' ]ail|villefranche|beaulieu|eze|menton|monaco",
     "code_postal":     r"\b\d{5}\b",
     "surface_habitable": r"(\d+[\s,.]?\d*)\s*m[2²]",
-    "surface_carrez":  r"(?i)carrez.*?(\d+[\s,.]?\d*)\s*m[2²]",
     "surface_terrain": r"(?i)terrain.*?(\d+[\s,.]?\d*)\s*m[2²]",
     "nb_pieces":       r"\d+\s*(pi[eè]ces?|chambres?)",
     "nb_chambres":     r"\d+\s*chambres?",
@@ -60,7 +59,6 @@ _REGEX_RULES: dict[str, str] = {
     "annee_construction": r"\b(1[89]\d{2}|20[012]\d)\b.*?(?:constru|b[aâ]ti|achev|livr|dat)",
     "etat_general":    r"(?i)(neuf|tres\s+bon|bon\s+[eé]tat|[eé]tat\s+(neuf|bon)|[aà]\s*rafra[iî]chir|[aà]\s*r[eé]nover|v[eé]tuste)",
     "mandataire":      r"(?i)(?:agence|mandataire|n[eé]gociateur|cabinet)\s+(?:immobili[eè]re?|de\s+l[' ])?([A-Z][a-zàâäéèêëîïôöùûüç]+(?:\s[A-Z][a-zàâäéèêëîïôöùûüç]+){1,3})",
-    "prix_m2":         r"\b\d[\d\s]*\s*[€$]\s*/\s*m[2²]",
     "nb_sdb":          r"\d+\s*salles?\s*de\s*bains?",
     "nb_sde":          r"\d+\s*salles?\s*d[' ]eau",
 }
@@ -541,7 +539,11 @@ async def extract_pdf(
     fields: list[FieldDef],
     model_id: str = "anthropic",
 ) -> ExtractionResult:
-    """Extraction directe depuis un PDF via Claude Vision — sans pdfplumber."""
+    """Extraction directe depuis un PDF via Claude Vision — sans pdfplumber.
+
+    Fallback : tente d'extraire le texte du PDF avec PyMuPDF (fitz),
+    puis applique les regex. Si fitz n'est pas disponible, retourne nulls.
+    """
     provider_name, model_name = resolve_model_id(model_id)
 
     if provider_name != "anthropic":
@@ -561,9 +563,32 @@ async def extract_pdf(
             model=model_name,
         )
     except Exception as exc:
-        return ExtractionResult(
-            fields={f.key: None for f in fields},
-            provider=f"{provider_name}_fallback",
-            model=model_name,
-            error=str(exc),
-        )
+        # Fallback : extraire le texte du PDF via PyMuPDF puis regex
+        try:
+            import fitz
+            doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+            text = "\n".join(page.get_text() for page in doc)
+            doc.close()
+            fallback = _regex_extract(text, fields)
+            return ExtractionResult(
+                fields=fallback,
+                provider=f"{provider_name}_fallback",
+                model=model_name,
+                error=str(exc),
+            )
+        except ImportError:
+            # PyMuPDF pas installe — retourner ce qu'on peut avec les regex sur un texte vide
+            fallback = _regex_extract("", fields)
+            return ExtractionResult(
+                fields=fallback,
+                provider=f"{provider_name}_fallback",
+                model=model_name,
+                error=str(exc) + "; PyMuPDF (fitz) non disponible",
+            )
+        except Exception as fallback_exc:
+            return ExtractionResult(
+                fields={f.key: None for f in fields},
+                provider=f"{provider_name}_fallback",
+                model=model_name,
+                error=str(exc) + "; fallback echoue: " + str(fallback_exc),
+            )

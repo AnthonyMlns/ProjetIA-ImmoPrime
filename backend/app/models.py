@@ -44,12 +44,8 @@ class AssetExtraction(BaseModel):
 
 
 class EnrichissementData(BaseModel):
-    motivation: str = ""
-    anciennete: str = ""
-    prix_min: str = ""
-    travaux: str = ""
-    histoire: str = ""
-    source: str = "déclaration orale mandataire"
+    notes: str = ""
+    source: str = "declaration orale mandataire"
 
 
 class AIFData(BaseModel):
@@ -68,7 +64,7 @@ class AIFData(BaseModel):
     fit_fonctionnel: str = ""
     fit_emotionnel: str = ""
     intentions: dict = {}
-    niveau_confiance: str = "FAIBLE"
+    qualite: dict = {}  # {"note": 4.2, "criteres": [{"label": "...", "score": 4, "commentaire": "..."}]}
     version: str = "1.0"
     created_at: str = ""
     visibility: str = "private"  # private | public | gated

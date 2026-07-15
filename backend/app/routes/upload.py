@@ -14,6 +14,35 @@ DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "output"
 DATA_DIR.mkdir(exist_ok=True)
 
 
+@router.post("/enrichissement")
+async def upload_enrichissement(
+    project_id: str = Form(...),
+    file: UploadFile = File(...),
+):
+    projects = load_projects()
+    if project_id not in projects:
+        return {"error": "Project not found"}, 404
+
+    content = await file.read()
+    if not content:
+        return {"success": False, "error": "Fichier vide"}
+
+    enrich_dir = DATA_DIR / project_id / "enrichissement"
+    enrich_dir.mkdir(parents=True, exist_ok=True)
+    dest = enrich_dir / file.filename
+    dest.write_bytes(content)
+
+    proj = projects[project_id]
+    proj.setdefault("enrichissement_attachments", []).append({
+        "name": file.filename,
+        "type": Path(file.filename).suffix.lstrip("."),
+        "size": len(content),
+    })
+    save_projects(projects)
+
+    return {"success": True, "file": {"name": file.filename, "size": len(content)}}
+
+
 @router.post("/")
 async def upload_file(
     project_id: str = Form(...),

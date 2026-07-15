@@ -52,12 +52,14 @@ export interface AssetExtraction {
 }
 
 export interface EnrichissementData {
-  motivation: string;
-  anciennete: string;
-  prix_min: string;
-  travaux: string;
-  histoire: string;
+  notes: string;
   source: string;
+}
+
+export interface CritereQualite {
+  label: string;
+  score: number;
+  commentaire: string;
 }
 
 export interface AIFData {
@@ -76,7 +78,7 @@ export interface AIFData {
   fit_fonctionnel: string;
   fit_emotionnel: string;
   intentions: Record<string, { statut: string; niveau: string }>;
-  niveau_confiance: string;
+  qualite: { note: number; criteres: CritereQualite[] };
   version: string;
   created_at: string;
 }
@@ -86,6 +88,9 @@ export interface AIFResult {
   vignette: string;
   note_actif: string;
   asset_briefing: string;
+  annonce_mandataire: string;
+  parole_client: string;
+  note_institutionnelle: string;
 }
 
 export const api = {
@@ -105,6 +110,12 @@ export const api = {
     fd.append("project_id", projectId);
     fd.append("file", file);
     return fetch(`${BASE}/upload/`, { method: "POST", body: fd }).then((r) => r.json()) as Promise<{ success: boolean; file: FileRecord }>;
+  },
+  uploadEnrichissement: (projectId: string, file: File) => {
+    const fd = new FormData();
+    fd.append("project_id", projectId);
+    fd.append("file", file);
+    return fetch(`${BASE}/upload/enrichissement`, { method: "POST", body: fd }).then((r) => r.json()) as Promise<{ success: boolean; file: { name: string; size: number } }>;
   },
   pipeline: {
     controlR1: (projectId: string, filename: string) =>
