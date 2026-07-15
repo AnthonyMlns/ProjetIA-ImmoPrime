@@ -345,27 +345,45 @@ async def generate_aif(req: AIFGenerateRequest):
     }
 
 
-async def _generer_annonce_mandataire(aif: dict) -> str:
-    contexte = (
+def _contexte_localisation(aif: dict) -> str:
+    parts = [aif.get('ville', '?')]
+    if aif.get('quartier'):
+        parts.append(f"quartier {aif['quartier']}")
+    if aif.get('code_postal'):
+        parts.append(f"({aif['code_postal']})")
+    if aif.get('region'):
+        parts.append(f"Region : {aif['region']}")
+    return ", ".join(parts)
+
+
+def _contexte_complet(aif: dict) -> str:
+    return (
+        f"Localisation : {_contexte_localisation(aif)}\n"
         f"Typologie : {aif.get('typologie', '?')}\n"
-        f"Ville : {aif.get('ville', '?')}\n"
         f"Surface : {aif.get('surface_habitable', '?')} m²\n"
+        f"Terrain : {aif.get('surface_terrain', '?')} m²\n"
         f"Pièces : {aif.get('nb_pieces', '?')} | Chambres : {aif.get('nb_chambres', '?')}\n"
         f"Prix : {aif.get('prix', '?')} EUR\n"
         f"DPE : {aif.get('dpe_classe', 'NC')}\n"
+        f"État : {aif.get('etat_general', '?')}\n"
         f"Fit fonctionnel : {aif.get('fit_fonctionnel', '?')}\n"
         f"Fit emotionnel : {aif.get('fit_emotionnel', '?')}\n"
     )
+
+
+async def _generer_annonce_mandataire(aif: dict) -> str:
+    context = _contexte_complet(aif)
     prompt = (
         "Tu es un mandataire immobilier de luxe specialise en biens d'exception.\n\n"
         "Redige une annonce commerciale irresistible pour ce bien, en francais.\n"
-        "Style : elegant, premium, envoutant — comme un mandataire haut de gamme\n"
-        "qui presente le bien a ses meilleurs clients.\n"
+        "Exploite ta connaissance de la localisation pour qualifier precisement "
+        "l'environnement, le standing du secteur, l'atmosphere du lieu.\n"
+        "Style : elegant, premium, envoutant — comme un mandataire haut de gamme.\n"
         "Longueur : 1 paragraphe de 5-8 phrases.\n"
         "Ne mentionne PAS le prix exact, ni l'adresse precise.\n"
         "Termine par une phrase d'appel a l'action.\n\n"
         "### Description du bien\n"
-        f"{contexte}\n\n"
+        f"{context}\n\n"
         "Redige l'annonce :"
     )
     try:
@@ -374,7 +392,7 @@ async def _generer_annonce_mandataire(aif: dict) -> str:
                 "https://api.anthropic.com/v1/messages",
                 headers={"x-api-key": AnthropicProvider().api_key, "anthropic-version": "2023-06-01", "Content-Type": "application/json"},
                 json={"model": "claude-sonnet-4-6", "max_tokens": 512, "temperature": 0.7,
-                      "system": "Tu es un redacteur d'annonces immobilieres de luxe. Sois elegant et concis.",
+                      "system": "Tu es un redacteur d'annonces immobilieres de luxe. Exploite au maximum ta connaissance des localisations.",
                       "messages": [{"role": "user", "content": prompt}]},
             )
         if resp.status_code == 200:
@@ -385,20 +403,19 @@ async def _generer_annonce_mandataire(aif: dict) -> str:
 
 
 async def _generer_parole_client(aif: dict) -> str:
-    contexte = (
-        f"Typologie : {aif.get('typologie', '?')}\n"
-        f"Ville : {aif.get('ville', '?')}\n"
-        f"Fit emotionnel : {aif.get('fit_emotionnel', '?')}\n"
-    )
+    loc = _contexte_localisation(aif)
     prompt = (
         "Tu es un proprietaire qui raconte son bien avec emotion et authenticite.\n\n"
         "Redige un texte court (4-6 phrases) a la premiere personne, comme si\n"
         "le proprietaire parlait de son bien a un ami ou a un conseiller UPRE.\n"
         "Inclus des details personnels : pourquoi il a aime ce bien, ce qui rend\n"
         "cet endroit unique a ses yeux, des souvenirs, l'atmosphere qu'il ressent.\n"
+        "Sois precis sur le lieu : parle de la lumiere, du climat, du cadre de vie,\n"
+        "des saisons, de ce que le proprietaire ressent a vivre dans cet endroit.\n"
         "Ton : chaleureux, sincere, personnel. Pas commercial.\n\n"
-        "### Le bien\n"
-        f"{contexte}\n\n"
+        f"### Le bien se situe a {loc}\n"
+        f"Typologie : {aif.get('typologie', '?')}\n"
+        f"Fit emotionnel : {aif.get('fit_emotionnel', '?')}\n\n"
         "Ce que le proprietaire dirait :"
     )
     try:
@@ -418,28 +435,19 @@ async def _generer_parole_client(aif: dict) -> str:
 
 
 async def _generer_note_institutionnelle(aif: dict) -> str:
-    contexte = (
-        f"Typologie : {aif.get('typologie', '?')}\n"
-        f"Ville : {aif.get('ville', '?')}\n"
-        f"Surface : {aif.get('surface_habitable', '?')} m²\n"
-        f"Terrain : {aif.get('surface_terrain', '?')} m²\n"
-        f"Pièces : {aif.get('nb_pieces', '?')} | Chambres : {aif.get('nb_chambres', '?')}\n"
-        f"Prix : {aif.get('prix', '?')} EUR\n"
-        f"DPE : {aif.get('dpe_classe', 'NC')}\n"
-        f"Fit fonctionnel : {aif.get('fit_fonctionnel', '?')}\n"
-        f"Fit emotionnel : {aif.get('fit_emotionnel', '?')}\n"
-    )
+    context = _contexte_complet(aif)
     prompt = (
         "Tu es un analyste UPRE specialise dans la redaction de notes d'investissement "
         "pour des clients institutionnels (conciergeries, family offices, banques privees).\n\n"
         "Redige une note concise et professionnelle en francais (6-10 phrases) qui :\n"
         "- Decrit le bien et ses caracteristiques cles\n"
-        "- Analyse son potentiel et son positionnement\n"
-        "- Mentionne les points d'attention pour un investisseur institutionnel\n"
+        "- Analyse le positionnement et l'attractivite de la localisation\n"
+        "- Evalue le potentiel et les risques pour un investisseur institutionnel\n"
         "Ton : factuel, precis, professionnel. Pas de superlatifs inutiles.\n"
+        "Exploite ta connaissance du marche local et du rayonnement de la zone.\n"
         "Ne mentionne PAS le prix exact ni l'adresse precise.\n\n"
         "### Caracteristiques du bien\n"
-        f"{contexte}\n\n"
+        f"{context}\n\n"
         "Note institutionnelle :"
     )
     try:
@@ -459,30 +467,22 @@ async def _generer_note_institutionnelle(aif: dict) -> str:
 
 
 async def _generer_qualite(aif: dict) -> dict:
-    contexte = (
-        f"Typologie : {aif.get('typologie', '?')}\n"
-        f"Ville : {aif.get('ville', '?')}\n"
-        f"Surface : {aif.get('surface_habitable', '?')} m²\n"
-        f"Terrain : {aif.get('surface_terrain', '?')} m²\n"
-        f"Pièces : {aif.get('nb_pieces', '?')} | Chambres : {aif.get('nb_chambres', '?')}\n"
-        f"Prix : {aif.get('prix', '?')} EUR\n"
-        f"DPE : {aif.get('dpe_classe', 'NC')}\n"
-        f"État : {aif.get('etat_general', '?')}\n"
-        f"Fit emotionnel : {aif.get('fit_emotionnel', '?')}\n"
-        f"Fit fonctionnel : {aif.get('fit_fonctionnel', '?')}\n"
-    )
+    context = _contexte_complet(aif)
     prompt = (
         "Tu es un expert UPRE specialise dans la qualification d'actifs immobiliers prime.\n\n"
         "Evalue la qualite globale de ce bien sur 5 selon 4 criteres :\n\n"
-        "1. **emplacement** — localisation, rayonnement, attractivite du quartier\n"
+        "1. **emplacement** — localisation, rayonnement, attractivite du quartier, "
+        "marche local, cadre de vie, acces, environnement (mobilise ta connaissance du lieu)\n"
         "2. **cachet** — qualite architecturale, charme, potentiel emotionnel\n"
         "3. **etat** — qualite des prestations, entretien, modernite\n"
         "4. **potentiel** — coup de cœur, rareté, valeur perçue, adéquation UPRE\n\n"
+        "Pour le critere emplacement, sois precis : exploite ta connaissance de la ville, "
+        "du quartier, de la region pour evaluer le standing et l'attractivite reelle du secteur.\n\n"
         "Retourne UNIQUEMENT un objet JSON avec :\n"
         '{\n'
         '  "note": <moyenne des 4 notes, float sur 5>,\n'
         '  "criteres": [\n'
-        '    {"label": "Emplacement", "score": <int/5>, "commentaire": "<une phrase>"},\n'
+        '    {"label": "Emplacement", "score": <int/5>, "commentaire": "<une phrase qui reflete le standing du lieu>"},\n'
         '    {"label": "Cachet", "score": <int/5>, "commentaire": "<une phrase>"},\n'
         '    {"label": "Etat", "score": <int/5>, "commentaire": "<une phrase>"},\n'
         '    {"label": "Potentiel", "score": <int/5>, "commentaire": "<une phrase>"}\n'
@@ -490,7 +490,7 @@ async def _generer_qualite(aif: dict) -> dict:
         '}\n\n'
         "Sois exigeant : 5/5 est exceptionnel, 3/5 est correct, 1/5 est faible.\n\n"
         "### Caracteristiques du bien\n"
-        f"{contexte}"
+        f"{context}"
     )
     try:
         async with httpx.AsyncClient(timeout=30) as client:
