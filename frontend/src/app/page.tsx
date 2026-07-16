@@ -104,6 +104,19 @@ export default function Home() {
           setEnrichResult((p as any).enrichissement);
           addLog("Enrichissement restaure");
         }
+        // Restaurer le dernier AIF depuis le cache
+        const assets = (p as any).assets || [];
+        const lastAif = assets.filter((a: any) => a.aif).pop();
+        if (lastAif) {
+          setAifResult(lastAif as any);
+          setAifForm((prev) => ({
+            ...prev,
+            ...lastAif.aif,
+          }));
+          addLog(`AIF restauré (note: ${lastAif.aif?.qualite?.note || "?"}/5)`);
+        } else {
+          setAifResult(null);
+        }
         setStage(p.stage >= 4 ? "passeport" : p.stage >= 3 ? "enrichissement" : p.stage >= 2 ? "controle" : "depot");
       });
     }
@@ -868,7 +881,7 @@ export default function Home() {
                 <div className="flex gap-3">
                   <button onClick={runAIF} disabled={loading} className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[var(--accent)] text-white font-medium hover:opacity-90 disabled:opacity-50">
                     {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                    Générer l'AIF
+                    {aifResult ? "Regenerer l'AIF" : "Generer l'AIF"}
                   </button>
                 </div>
 

@@ -514,5 +514,4 @@ async def _generer_qualite(aif: dict) -> dict:
                 "criteres": parsed.get("criteres", []),
             }
     except Exception:
-        pass
-    return {"note": 0.0, "criteres": []}
+        return {"note": 0.0, "criteres": []}
