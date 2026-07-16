@@ -294,6 +294,56 @@
     </div>
   </header>
 
+  <!-- MISE A JOUR CHIFFRAGE -->
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow" style="margin-bottom:10px;">Mise à jour · 16 juillet 2026</div>
+      <h2>Réponse au chiffrage demandé par UPRE</h2>
+      <p>
+        Suite à la liste des tâches transmise par Frédéric Engel et aux neuf questions posées en
+        clôture de ce document, cette note est complétée sur trois points : l'état d'avancement
+        réel du build (une partie de la Phase 0 est déjà écrite), le prix des Phases 2 et 3,
+        jusqu'ici laissées « à chiffrer », et une option de rémunération indexée sur les ventes
+        abouties. Les réponses aux neuf questions sont regroupées en fin de document.
+      </p>
+    </div>
+  </section>
+
+  <!-- ETAT D'AVANCEMENT -->
+  <section>
+    <div class="sec-head">
+      <h2>État d'avancement réel du build</h2>
+      <p>Ce qui est déjà écrit dans le pipeline, et ce qui reste à construire — base des prix révisés ci-dessous.</p>
+    </div>
+    <div class="eval-cols">
+      <div class="eval-col">
+        <div class="tag">déjà livré</div>
+        <h4>Dans le build en cours</h4>
+        <ul>
+          <li>Pipeline d'extraction LLM Vision (Claude Sonnet), lecture PDF native</li>
+          <li>Schéma de 64 champs normalisés + génération dynamique des questions de complétude</li>
+          <li>Enrichissement Fit fonctionnel / émotionnel + lecture des intentions UPRE</li>
+          <li>Génération Vignette / Note d'Actif / Asset Briefing (brouillon, filtrage public / gated)</li>
+          <li>Sanitizer et anti-injection à double couche</li>
+          <li>UI opérateur à 4 étapes, cache, import en lot, corbeille</li>
+        </ul>
+      </div>
+      <div class="eval-col">
+        <div class="tag">reste à faire</div>
+        <h4>Pour clore les tâches 1 à 4, puis au-delà</h4>
+        <ul>
+          <li>Module d'ingestion : rattachement par n° de mandat, dédoublonnage, calcul AUM</li>
+          <li>Migration du stockage — JSON plat aujourd'hui → PostgreSQL + pgvector</li>
+          <li>Harnais d'évaluation champ à champ + jeu de test sur 20–30 R1 réelles</li>
+          <li>Agent QA (validation structure, cohérence, anti-hallucination, complétude)</li>
+          <li>Interface vocale mandataire (Whisper self-hébergé) — Phase 2</li>
+          <li>Workflow NDA complet : auth acquéreur, watermark, révélation progressive — Phase 2</li>
+          <li>Qualification d'intention entrante, Gate + Fit, Match — Phase 3</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
   <!-- OBJECTIFS -->
   <section>
     <div class="sec-head">
@@ -453,41 +503,57 @@
   <section>
     <div class="sec-head">
       <h2>Stack technique, couche par couche</h2>
-      <p>Choisie pour 300 actifs et un opérateur, pas pour une promesse de scale. Chaque non-choix est volontaire.</p>
+      <p>Choisie pour 300 actifs et un opérateur, pas pour une promesse de scale. Chaque non-choix est volontaire. <strong style="color:var(--teal); font-weight:500;">Vert = déjà en production</strong> dans le build actuel, le reste est prévu aux phases indiquées.</p>
     </div>
 
     <div class="stack-grid">
 
       <div class="stack-row">
-        <div class="col layer"><div class="tag">extraction</div><h4>Moteur de lecture</h4></div>
+        <div class="col layer"><div class="tag">hébergement</div><h4>Infrastructure &amp; conformité</h4></div>
         <div class="col tool">
-          <div class="toolname">LLM vision (API)</div>
-          <div class="why">Lit R1, jauges DPE, plans — extraction contre le schéma. Le choix de fournisseur se fait sur le taux d'exactitude mesuré en Phase 0, pas sur la marque.</div>
+          <div class="toolname">Scaleway ou OVHcloud — France</div>
+          <div class="why">Données actifs et intentions d'acquéreurs hébergées en France, cloisonnées par client, conformes RGPD. Le fournisseur exact se fixe à la réunion de conception technique — la contrainte non négociable est « France + cloisonnement », pas la marque.</div>
         </div>
       </div>
 
       <div class="stack-row">
-        <div class="col layer"><div class="tag">pré-traitement</div><h4>Documents</h4></div>
+        <div class="col layer"><div class="tag">IA — extraction</div><h4>Moteur de lecture</h4></div>
         <div class="col tool">
-          <div class="toolname">PyMuPDF / pdf2image</div>
-          <div class="why">Rasterise les pages PDF avant envoi au modèle, conserve le nom de fichier comme source.</div>
+          <div class="toolname">Claude Sonnet (Anthropic) — Vision <strong style="color:var(--teal); font-weight:500;">— en production</strong></div>
+          <div class="why">Lit les PDF nativement (R1, jauges DPE, plans) en document base64, extrait contre le schéma de 64 champs, génère le Fit fonctionnel/émotionnel et la lecture des intentions UPRE. Le choix de fournisseur reste ouvert à comparaison sur le taux d'exactitude mesuré en Phase 0 — Claude est le candidat actuellement retenu, pas un engagement de marque définitif.</div>
         </div>
       </div>
 
       <div class="stack-row">
-        <div class="col layer"><div class="tag">orchestration</div><h4>Pipeline</h4></div>
+        <div class="col layer"><div class="tag">IA — vocal</div><h4>Transcription mandataire</h4></div>
         <div class="col tool">
-          <div class="toolname">Python — machine à états</div>
-          <div class="why">Boucles et branchements explicites. Une lib comme LangGraph peut formaliser les états si utile.</div>
+          <div class="toolname">Whisper — self-hébergé <span class="sub" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted-dim);">Phase 2</span></div>
+          <div class="why">Transcription FR fiable, qualifiée « déclaration orale mandataire » avant ré-injection au score. Self-hébergé pour rester dans le périmètre RGPD France plutôt que de faire transiter de la voix par une API tierce.</div>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="col layer"><div class="tag">backend</div><h4>Pipeline &amp; orchestration</h4></div>
+        <div class="col tool">
+          <div class="toolname">Python 3.12 + FastAPI <strong style="color:var(--teal); font-weight:500;">— en production</strong></div>
+          <div class="why">Machine à états explicite : ingestion → extraction → score → AIF. Boucles et branchements lisibles, pas un agent autonome.</div>
           <div class="not">Pas de framework d'agents lourd — 300 actifs ne le justifient pas.</div>
         </div>
       </div>
 
       <div class="stack-row">
-        <div class="col layer"><div class="tag">stockage</div><h4>Master &amp; mémoire</h4></div>
+        <div class="col layer"><div class="tag">interface</div><h4>Revue opérateur</h4></div>
         <div class="col tool">
-          <div class="toolname">PostgreSQL + pgvector</div>
-          <div class="why">Tient le master, l'AIF versionné, et la similarité (déduplication, matching futur) via une extension, pas un service à part.</div>
+          <div class="toolname">Next.js 16 + React 19 + Tailwind 4 <strong style="color:var(--teal); font-weight:500;">— en production</strong></div>
+          <div class="why">UI à 4 étapes (dépôt, contrôle R1, enrichissement, AIF), cache, import en lot, corbeille. Gates de validation humaine à chaque étape sensible.</div>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="col layer"><div class="tag">données</div><h4>Master &amp; mémoire versionnée</h4></div>
+        <div class="col tool">
+          <div class="toolname">JSON plat aujourd'hui → PostgreSQL + pgvector <span class="sub" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted-dim);">Phase 1</span></div>
+          <div class="why">Le stockage plat actuel (<span class="mono" style="color:var(--gold-soft);">_projects.json</span>) suffisait pour la Phase 0. La migration porte le master, l'AIF versionné et la similarité (déduplication, matching) via une extension pgvector, pas un service à part.</div>
           <div class="not">Pas de base graphe dédiée (Neo4j) — complexité prématurée à cette échelle.</div>
         </div>
       </div>
@@ -495,32 +561,32 @@
       <div class="stack-row">
         <div class="col layer"><div class="tag">coffre fichiers</div><h4>Documents bruts</h4></div>
         <div class="col tool">
-          <div class="toolname">Stockage objet S3-compatible — France</div>
-          <div class="why">Scaleway / OVH. Argument RGPD direct, pas une clause de devis à formaliser plus tard.</div>
+          <div class="toolname">Stockage objet S3-compatible — France <span class="sub" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted-dim);">Phase 1</span></div>
+          <div class="why">Remplace le stockage local actuel (dossier <span class="mono" style="color:var(--gold-soft);">output/&lt;id&gt;</span>) à la migration. Scaleway / OVH — argument RGPD direct, pas une clause à formaliser plus tard.</div>
         </div>
       </div>
 
       <div class="stack-row">
-        <div class="col layer"><div class="tag">vocal</div><h4>Enrichissement mandataire</h4></div>
+        <div class="col layer"><div class="tag">pré-traitement</div><h4>Lecture des documents</h4></div>
         <div class="col tool">
-          <div class="toolname">Whisper (self-hébergé)</div>
-          <div class="why">Transcription FR fiable, qualifiée « déclaration orale mandataire » avant ré-injection au score.</div>
+          <div class="toolname">Lecture PDF native <strong style="color:var(--teal); font-weight:500;">— en production</strong> + PyMuPDF <span class="sub" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted-dim);">à venir</span></div>
+          <div class="why">Les PDF sont envoyés en base64 directement au modèle de vision. PyMuPDF / pdf2image viendra rasteriser les formats non-PDF (scans, photos seules) avant envoi.</div>
         </div>
       </div>
 
       <div class="stack-row">
-        <div class="col layer"><div class="tag">interface</div><h4>Revue opérateur</h4></div>
+        <div class="col layer"><div class="tag">sécurité</div><h4>Anti-injection</h4></div>
         <div class="col tool">
-          <div class="toolname">Next.js / React</div>
-          <div class="why">Revue, correction, gates de validation humaine — la supervision exigée à chaque étape sensible.</div>
+          <div class="toolname">Sanitizer double couche <strong style="color:var(--teal); font-weight:500;">— en production</strong></div>
+          <div class="why">Filtre à l'upload et juste avant l'appel LLM, tagging XML des documents, alertes détaillées sur fichier bloqué ou signalé (PII, mentions confidentielles).</div>
         </div>
       </div>
 
       <div class="stack-row">
         <div class="col layer"><div class="tag">évaluation</div><h4>Harnais de test</h4></div>
         <div class="col tool">
-          <div class="toolname">Script Python — diff champ à champ</div>
-          <div class="why">Compare extraction vs vérité terrain sur 20–30 R1. C'est le livrable de la Phase 0.</div>
+          <div class="toolname">Script Python — diff champ à champ <span class="sub" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted-dim);">à écrire</span></div>
+          <div class="why">Compare extraction vs vérité terrain sur 20–30 R1. C'est le livrable qui reste à produire pour clore la Phase 0.</div>
         </div>
       </div>
 
@@ -611,7 +677,7 @@
   <section>
     <div class="sec-head">
       <h2>Évaluation</h2>
-      <p>Le différenciateur face à Substi : eux promettent, ce système mesure — avant l'engagement, puis en continu.</p>
+      <p>Mesurer avant tout engagement, puis en continu — pas une promesse de principe.</p>
     </div>
     <div class="eval-cols">
       <div class="eval-col">
@@ -625,7 +691,7 @@
       </div>
       <div class="eval-col">
         <div class="tag">continue — en production</div>
-        <h4>Jamais proposée par Substi dans le devis</h4>
+        <h4>Après la mise en production</h4>
         <ul>
           <li><strong style="color:var(--cream); font-weight:500;">Dérive d'extraction</strong> — ré-évaluation périodique sur le même jeu fixe</li>
           <li><strong style="color:var(--cream); font-weight:500;">Décisions correctes</strong> — combien de « AIF direct » tiennent sans correction</li>
@@ -646,36 +712,36 @@
       <div class="pn">0</div>
       <div>
         <h4>Preuve d'extraction</h4>
-        <p>Jeu de test sur de vraies R1 UPRE, taux d'exactitude livré. Engage ou arrête la suite pour une somme dérisoire.</p>
+        <p>Jeu de test sur de vraies R1 UPRE, taux d'exactitude livré. Pipeline Vision, sanitizer et UI déjà opérationnels — reste le harnais d'évaluation et le jeu de test avant livraison.</p>
       </div>
-      <div class="cost">2–4 k€<span class="sub">HT · 1–2 sem.</span></div>
+      <div class="cost">2–4 k€<span class="sub">HT · 1–2 sem. · build engagé</span></div>
     </div>
 
     <div class="phase">
       <div class="pn">1</div>
       <div>
         <h4>MVP — tâches 1 à 4</h4>
-        <p>Schéma master, ingestion, extraction, scoring, AIF templatée, UI opérateur, harnais d'éval.</p>
+        <p>Schéma 64 champs et pipeline d'extraction déjà livrés. Reste : ingestion/dédoublonnage/AUM, migration PostgreSQL, agent QA, harnais d'éval.</p>
       </div>
-      <div class="cost">12–30 k€<span class="sub">HT · 25–40 j</span></div>
+      <div class="cost">12–30 k€<span class="sub">HT engagé · reste ≈ 10–15 k€ HT / 16–23 j</span></div>
     </div>
 
     <div class="phase">
       <div class="pn">2</div>
       <div>
         <h4>Vocal &amp; passeport</h4>
-        <p>Enrichissement mandataire, Vignette / Note d'Actif / Asset Briefing, premières règles NDA.</p>
+        <p>Vignette / Note d'Actif / Asset Briefing déjà générées en brouillon. Reste : interface vocale mandataire (Whisper), workflow NDA complet (auth, watermark, révélation progressive, logs).</p>
       </div>
-      <div class="cost">À chiffrer<span class="sub">après Phase 1</span></div>
+      <div class="cost">11–16 k€<span class="sub">HT · 18–25 j</span></div>
     </div>
 
     <div class="phase">
       <div class="pn">3</div>
       <div>
         <h4>Intention &amp; Match</h4>
-        <p>Qualification d'intention, Gate+Fit, Match — honnêtement dépendant du volume d'intentions captées.</p>
+        <p>Qualification d'intention, Gate+Fit, Match, préparation de mise en relation — chiffré sur une hypothèse de flux modéré, à réviser selon le volume réel d'intentions captées.</p>
       </div>
-      <div class="cost">À chiffrer<span class="sub">selon volume réel</span></div>
+      <div class="cost">16–25 k€<span class="sub">HT · 25–39 j</span></div>
     </div>
   </section>
 
@@ -736,61 +802,225 @@
       <div class="cost">2 500 €<span class="sub">HT/mois · ensuite</span></div>
     </div>
 
-    <div class="loop-note">↻ Le passage de B à C se déclenche sur les <strong style="color:var(--cream); font-weight:500;">mêmes critères d'acceptation chiffrés</strong> que la Phase 0 — le taux d'exactitude validé sur le jeu de test — jamais sur une impression de « c'est prêt ». C'est ce qui évite de recréer le flou reproché à Substi sur la définition de « mission remplie ».</div>
-
-    <table class="compare" style="margin-top:28px;">
-      <tr><th>Sur 12 mois</th><th>Substi</th><th>Cette structure</th></tr>
-      <tr>
-        <td class="dim">déclenchement du récurrent</td>
-        <td>À la mise en production du POC</td>
-        <td class="win">Dès le premier mois de build</td>
-      </tr>
-      <tr>
-        <td class="dim">total cash sur 12 mois</td>
-        <td>10 k€ + ~8 mois d'abonnement ≈ <strong style="color:var(--cream); font-weight:500;">30 k€</strong></td>
-        <td class="win">Phase 0 + 4 mois build + 8 mois exploitation ≈ <strong style="color:var(--gold-soft); font-weight:500;">33 k€</strong></td>
-      </tr>
-      <tr>
-        <td class="dim">point d'entrée perçu</td>
-        <td>10 k€ affichés</td>
-        <td class="win">Équivalent, sans gros chèque initial</td>
-      </tr>
-    </table>
+    <div class="loop-note">↻ Le passage de B à C se déclenche sur les <strong style="color:var(--cream); font-weight:500;">mêmes critères d'acceptation chiffrés</strong> que la Phase 0 — le taux d'exactitude validé sur le jeu de test — jamais sur une impression de « c'est prêt ». La définition de « mission remplie » reste chiffrée à chaque étape, jamais laissée à l'appréciation.</div>
   </section>
 
-  <!-- COMPARAISON -->
-  <section class="no-border">
+  <!-- COMMISSION -->
+  <section>
     <div class="sec-head">
-      <h2>Face au devis Substi</h2>
-      <p>Le prix n'est pas l'axe de comparaison qui compte — celui-ci l'est.</p>
+      <h2>Option — part sur commission de vente</h2>
+      <p>
+        L'abonnement d'exploitation (Track C) paie du temps de maintenance, pas du résultat commercial.
+        Cette option aligne une part de la rémunération sur les ventes réellement abouties grâce au
+        système — en remplacement partiel de l'abonnement mensuel, pas en plus.
+      </p>
     </div>
-    <table class="compare">
-      <tr><th>Critère</th><th>Substi</th><th>Cette proposition</th></tr>
+
+    <div class="phase">
+      <div class="pn">D</div>
+      <div>
+        <h4>Abonnement réduit + commission de performance</h4>
+        <p>Remplace l'abonnement d'exploitation plein tarif par un abonnement réduit couvrant la maintenance de base, complété par une part sur la commission que <strong style="color:var(--cream); font-weight:500;">UPRE perçoit elle-même</strong> sur la vente — jamais sur le prix de vente total — pour chaque actif dont le Match du système a mené à une signature.</p>
+      </div>
+      <div class="cost">1 000–1 500 €<span class="sub">HT/mois · + commission</span></div>
+    </div>
+
+    <div class="loop-note">↻ La part système ne se déclenche que sur une chaîne tracée dans la mémoire (AKG) : Match (Go) → Visite → NDA si nécessaire → Signature. Un Match qui n'aboutit pas ne déclenche rien — la commission porte sur la transaction réalisée, jamais sur l'activité produite.</div>
+
+    <table class="compare" style="margin-top:28px;">
+      <tr><th>Paramètre</th><th>Taux</th><th>Applicable quand</th></tr>
       <tr>
-        <td class="dim">acceptation</td>
-        <td>« Remboursement si une mission n'est pas remplie » — non défini</td>
-        <td class="win">Taux d'exactitude chiffré sur de vraies R1, avant engagement</td>
+        <td class="dim">commission UPRE — mandataire direct</td>
+        <td>5 % du prix de vente</td>
+        <td class="win">UPRE détient elle-même le mandat sur l'actif</td>
       </tr>
       <tr>
-        <td class="dim">IP &amp; données</td>
-        <td>Frontière IP/Substi « formalisée à la réunion de conception »</td>
-        <td class="win">Schéma, code, données possédés par UPRE dès la Phase 0</td>
+        <td class="dim">commission UPRE — mandataire indirect</td>
+        <td>2,5 % du prix de vente</td>
+        <td class="win">UPRE co-mandataire, apporte l'acquéreur sur le mandat d'un tiers</td>
       </tr>
       <tr>
-        <td class="dim">séquencement</td>
-        <td>6 employés couvrant tout le workflow d'emblée</td>
-        <td class="win">MVP isolé d'abord (tâches 1–4), reste chiffré après preuve</td>
+        <td class="dim">commission UPRE — prescripteur</td>
+        <td>1,25 % du prix de vente</td>
+        <td class="win">UPRE met en relation sans détenir de mandat — prélevé sur la commission du mandataire iad, pas un surcoût pour le vendeur</td>
       </tr>
       <tr>
-        <td class="dim">coût</td>
-        <td>10 k€ setup + 2,5 k€/mois</td>
-        <td>2–4 k€ (Phase 0) puis 12–30 k€ (MVP) + maintenance ~50–300 €/mois</td>
+        <td class="dim">part système sur cette commission</td>
+        <td>5–10 %</td>
+        <td class="win">à fixer contractuellement — hypothèse de travail</td>
+      </tr>
+      <tr>
+        <td class="dim">exemple — actif à 2 M€, part système à 8 %</td>
+        <td>direct (5 % = 100 k€) → <strong style="color:var(--gold-soft); font-weight:500;">8 000 €</strong><br>indirect (2,5 % = 50 k€) → <strong style="color:var(--gold-soft); font-weight:500;">4 000 €</strong><br>prescripteur (1,25 % = 25 k€) → <strong style="color:var(--gold-soft); font-weight:500;">2 000 €</strong></td>
+        <td class="win">par vente signée attribuable au système</td>
       </tr>
     </table>
+
+    <div class="loop-note">↻ Le module Match &amp; Handover (tâche 6) « transmet au bon mandataire » — dans la majorité des cas, l'actif entre via la R1 d'un mandataire tiers et UPRE met en relation sans détenir le mandat. Le cas le plus fréquent est donc probablement le taux prescripteur (1,25 %), le taux indirect (2,5 %) s'appliquant aux co-mandats et le taux direct (5 %) aux seuls actifs où UPRE porte elle-même le mandat.</div>
+
+    <table class="compare" style="margin-top:20px;">
+      <tr><th>Sur 12 mois</th><th>Track C — forfait fixe</th><th>Track D — réduit + commission</th></tr>
+      <tr>
+        <td class="dim">coût fixe</td>
+        <td>2 500 €/mois × 12 = 30 000 €</td>
+        <td class="win">1 000–1 500 €/mois × 12 = 12 000–18 000 €</td>
+      </tr>
+      <tr>
+        <td class="dim">part variable</td>
+        <td>aucune</td>
+        <td class="win">2 000–8 000 € HT par vente signée, selon prescripteur, mandat indirect ou direct (hypothèse ci-dessus)</td>
+      </tr>
+      <tr>
+        <td class="dim">logique</td>
+        <td>prévisible, indépendant du volume de ventes</td>
+        <td class="win">coût plus bas à faible volume, partage la valeur créée si le système performe</td>
+      </tr>
+    </table>
+
+    <div class="sec-head" style="margin-top:40px;">
+      <h3 style="font-size:18px;color:var(--cream);font-family:'Fraunces',serif;font-weight:500;">Chiffrage d'exemple — simulation sur 12 mois</h3>
+      <p style="font-size:14px;color:var(--muted);margin-top:8px;max-width:640px;">Hypothèses de travail ci-dessous, à recalculer avec les chiffres réels d'UPRE dès qu'ils sont disponibles.</p>
+    </div>
+
+    <div class="loop-note" style="border-top:none;padding-top:0;">
+      <strong style="color:var(--cream); font-weight:500;">Hypothèses :</strong> portefeuille de 300 actifs prime, prix moyen 2 M€, répartition des ventes attribuables au système — 20 % en mandat direct, 30 % en mandat indirect, 50 % en prescription (cohérent avec le fonctionnement du Match &amp; Handover, qui transmet le plus souvent à un mandataire tiers). Commission UPRE moyenne pondérée sur ce mix : <span class="mono" style="color:var(--gold-soft);">0,20×5 % + 0,30×2,5 % + 0,50×1,25 % = 2,375 %</span> du prix de vente. Part système à 8 % de cette commission.
+    </div>
+
+    <div class="loop-note">↻ Soit, par vente attribuable au système : commission UPRE moyenne = 2,375 % × 2 M€ = <strong style="color:var(--cream); font-weight:500;">47 500 €</strong> → part système à 8 % = <strong style="color:var(--gold-soft); font-weight:500;">3 800 € HT</strong> en moyenne pondérée par vente.</div>
+
+    <table class="compare" style="margin-top:20px;">
+      <tr><th>Ventes attribuables au système / an</th><th>Track C — annuel</th><th>Track D — annuel</th><th>Track D lissé / mois</th><th>Écart</th></tr>
+      <tr>
+        <td class="dim">0</td>
+        <td>30 000 €</td>
+        <td class="win">15 000 €</td>
+        <td class="win">1 250 €</td>
+        <td>Track D moins cher de 1 250 €/mois</td>
+      </tr>
+      <tr>
+        <td class="dim">2</td>
+        <td>30 000 €</td>
+        <td class="win">22 600 €</td>
+        <td class="win">1 883 €</td>
+        <td>Track D moins cher de 617 €/mois</td>
+      </tr>
+      <tr>
+        <td class="dim">4 — seuil d'équilibre</td>
+        <td>30 000 €</td>
+        <td>30 200 €</td>
+        <td>2 517 €</td>
+        <td>quasi équivalent au forfait (2 500 €/mois)</td>
+      </tr>
+      <tr>
+        <td class="dim">10</td>
+        <td class="win">30 000 €</td>
+        <td>53 000 €</td>
+        <td>4 417 €</td>
+        <td>Track D plus cher de 1 917 €/mois — mais 10 ventes générées</td>
+      </tr>
+      <tr>
+        <td class="dim">20</td>
+        <td class="win">30 000 €</td>
+        <td>91 000 €</td>
+        <td>7 583 €</td>
+        <td>Track D plus cher de 4 083 €/mois — mais 20 ventes générées</td>
+      </tr>
+    </table>
+
+    <div class="loop-note">↻ Le seuil d'équilibre se situe autour de 4 ventes attribuables au système par an, soit un taux de conversion Match → Signature d'environ 1,3 % du portefeuille de 300 actifs. En dessous, Track D revient moins cher chaque mois à UPRE que les 2 500 €/mois du forfait fixe. Au-dessus, Track D coûte plus cher en lissé — mais uniquement parce que le système a produit davantage de ventes que le scénario de référence. La part variable n'est jamais un coût sec : c'est un pourcentage d'un revenu de commission qui n'existerait pas sans le Match du système. En pratique, la commission se règle par transaction et non lissée mois par mois — la colonne « lissé » sert uniquement à comparer sur la même base que le forfait Track C.</div>
+  </section>
+
+  <!-- REPONSES AUX 9 QUESTIONS -->
+  <section class="no-border">
+    <div class="sec-head">
+      <h2>Réponses aux 9 questions de chiffrage</h2>
+      <p>Point par point, dans l'ordre des neuf questions transmises.</p>
+    </div>
+
+    <div class="phase">
+      <div class="pn">1</div>
+      <div>
+        <h4>Un seul employé IA, ou plusieurs spécialisés ?</h4>
+        <p>Ni un agent monolithique, ni une collection d'« employés » facturés séparément. Un seul système à quatre couches (pipeline actif, pipeline intention, passeport &amp; accès, mémoire), et à l'intérieur de chaque couche un modèle différent par rôle selon la difficulté réelle de la tâche — voir « Sélection des modèles » ci-dessus. Découper artificiellement en plusieurs briques facturées n'apporterait rien de plus qu'une différence de présentation.</p>
+      </div>
+      <div class="cost">Un système<span class="sub">multi-rôles internes</span></div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">2</div>
+      <div>
+        <h4>Périmètre minimal réaliste pour le POC</h4>
+        <p>Les tâches 1 à 4 (ingestion, extraction/contrôle R1, enrichissement mandataire, AIF) — le périmètre que vous désignez vous-même comme prioritaire « ASAP ». C'est le rez-de-chaussée de l'architecture. Les tâches 5–10 correspondent aux Phases 2 et 3, à engager après validation du taux d'exactitude. La tâche 11 (mémoire/AKG) est transverse — écrite en continu, pas un chantier séparé. La tâche 12 (contenu GEO/AEO) est un chantier éditorial distinct, hors périmètre technique. La tâche 13 (supervision humaine) est intégrée nativement à chaque étape sensible.</p>
+      </div>
+      <div class="cost">Tâches 1–4<span class="sub">rez-de-chaussée seul</span></div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">3</div>
+      <div>
+        <h4>Coût de mise en place</h4>
+        <p>Pour les tâches 1 à 4 seules : 2–4 k€ HT (Phase 0, quasi soldée par le build déjà engagé) + 10–15 k€ HT restants sur la Phase 1 = 12–19 k€ HT au total. Si l'intégralité du workflow est engagée (Phases 0 à 3), l'enveloppe complète est 39–60 k€ HT — mais chaque phase reste un livrable fermé à prix fermé, rien n'est dû sur les Phases 2 et 3 avant que la Phase 1 ait prouvé son taux d'exactitude.</p>
+      </div>
+      <div class="cost">12–19 k€<span class="sub">HT · tâches 1–4</span></div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">4</div>
+      <div>
+        <h4>Coût mensuel de fonctionnement</h4>
+        <p>Deux lignes distinctes. L'infrastructure (hébergement France + appels API LLM) coûte 50–300 €/mois selon le volume réel — un appel Claude Vision sur une R1 tourne autour de 0,03–0,06 $, donc même à 300 actifs/mois le coût reste marginal. L'exploitation (maintenance, évolutions, surveillance du taux d'exactitude et de la dérive) est un abonnement de 2 500 € HT/mois — mais qui ne démarre qu'à la mise en production réelle, jamais avant qu'une valeur ait été livrée. Une alternative existe : réduire cet abonnement à 1 000–1 500 €/mois et le compléter par une part sur la commission qu'UPRE perçoit sur les ventes abouties via le système — voir « Option — part sur commission de vente » ci-dessus.</p>
+      </div>
+      <div class="cost">2 500 €<span class="sub">HT/mois · + 50–300 € infra</span></div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">5</div>
+      <div>
+        <h4>LLM structuré, avant un éventuel World Model</h4>
+        <p>Confirmé — c'est déjà l'approche du build en cours : un schéma de champs fixe (64 champs), un glossaire et des taxonomies UPRE calibrés dessus, des workflows explicites par étape plutôt qu'un agent autonome. Un World Model deviendrait pertinent si UPRE veut un jour faire raisonner le système sur des relations non explicitement modélisées — prématuré pour 300 actifs et un opérateur.</p>
+      </div>
+      <div class="cost">Confirmé<span class="sub">approche déjà retenue</span></div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">6</div>
+      <div>
+        <h4>Outils à connecter en priorité</h4>
+        <p>Dans l'ordre : (1) le coffre UPRE où les mandataires déposent R1/plans/photos/DPE — seule vraie dépendance bloquante pour démarrer ; (2) un stockage objet S3-compatible hébergé en France (Scaleway/OVH) ; (3) PostgreSQL + pgvector pour le master et la mémoire versionnée ; (4) à partir de la Phase 2, une brique de téléphonie/visio pour l'interface vocale mandataire. Aucun CRM tiers n'est nécessaire pour les tâches 1 à 4.</p>
+      </div>
+      <div class="cost">4 outils<span class="sub">coffre en priorité 1</span></div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">7</div>
+      <div>
+        <h4>Données à fournir pour démarrer</h4>
+        <p>En dehors des matières premières du mandataire (R1 + plan + photos + DPE) : un jeu de 20 à 30 R1 réelles avec vérité terrain saisie à la main — le livrable qui débloque ou arrête la Phase 0, pour une somme dérisoire. Utilement aussi : le glossaire et les taxonomies UPRE, et si possible un échantillon des Notes d'Actif déjà produites, pour calibrer le phrasé et les règles métier dès le départ.</p>
+      </div>
+      <div class="cost">20–30 R1<span class="sub">+ vérité terrain</span></div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">8</div>
+      <div>
+        <h4>Limites et dépendances techniques</h4>
+        <p>La qualité réelle des R1 sources plafonne mécaniquement le taux d'exactitude — un pipeline ne rattrape pas une fiche vide. L'absence de plan ou de photos dégrade le niveau de confiance de l'AIF, pas la capacité à produire un brouillon. Les étapes sensibles (NDA, diffusion, mise en relation) restent sous validation humaine par choix architectural — un opérateur reste nécessaire même à pleine maturité. La Phase 3 dépend du volume réel d'intentions captées, chiffrée ici sur un flux modéré. L'hébergement France/RGPD contraint le choix de fournisseur cloud et de modèle.</p>
+      </div>
+      <div class="cost">5 points<span class="sub">de vigilance</span></div>
+    </div>
+
+    <div class="phase">
+      <div class="pn">9</div>
+      <div>
+        <h4>Calendrier réaliste</h4>
+        <p>La Phase 0 est déjà engagée en interne — reste le harnais d'évaluation et le jeu de test, livrable sous 1 à 2 semaines. La Phase 1 (dédoublonnage/AUM, migration PostgreSQL, agent QA) tient en 3 à 5 semaines derrière, ce qui place le POC opérationnel sur les tâches 1 à 4 fin août 2026 — dans les temps pour l'horizon de septembre. Les Phases 2 et 3 ne sont pas sur le chemin critique du POC : elles s'engagent après, si le taux d'exactitude est validé et si le volume d'intentions le justifie.</p>
+      </div>
+      <div class="cost">Fin août<span class="sub">POC tâches 1–4</span></div>
+    </div>
   </section>
 
   <footer>
-    <p>UPRE — Unique Prime Real Estate · note interne de chiffrage, version de travail.</p>
+    <p>UPRE — Unique Prime Real Estate · note interne de chiffrage, mise à jour du 16 juillet 2026.</p>
   </footer>
 
 </div>
